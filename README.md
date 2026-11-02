@@ -132,17 +132,19 @@ numbers, symbols.
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for the threat model and residual risks. Summary:
+See [SECURITY.md](SECURITY.md) for the threat model, and
+[SECURITY_AUDIT.md](SECURITY_AUDIT.md) for the latest audit, test matrix and
+remaining actions. Summary:
 
 - Plain HTTP on port 3000 (TLS temporarily disabled — see SECURITY.md)
 - Session cookie `HttpOnly`, `SameSite=Lax`; tokens stored hashed
 - 30-day absolute / 7-day idle sessions, max 10 per user, revoke-all
 - bcrypt (cost 12), password policy, forced change of the default password
-- Persisted login throttling (10 failures per account+IP, 40 per IP per 15 min)
+- Persisted login throttling (10 failures per account; 40 per IP as well when behind a trusted proxy)
 - Optional TOTP two-factor authentication with QR setup
 - CSRF protection via Origin + `Sec-Fetch-Site` checks on every mutation
 - Strict security headers and CSP; `X-Frame-Options`, `nosniff`, no-referrer
-- Path-traversal guard on every file operation; private folders isolated per user
+- Path-traversal and symlink-escape guard on every file operation; private folders isolated per user
 - SVG/HTML/XML/JS forced to download (no stored XSS); ZIP skips symlinks
 - Upload chunk and file-size caps
 - Audit log of logins, uploads, deletes, admin actions and password/2FA changes
@@ -175,6 +177,7 @@ STORAGE_ROOT=/srv/cove/files
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
 COOKIE_SECURE=0          # 1 only when TLS is enabled
+TRUST_PROXY=0            # 1 only behind a proxy that overwrites X-Forwarded-For
 SESSION_IDLE_DAYS=7
 MAX_UPLOAD_GB=200
 

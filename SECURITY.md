@@ -3,6 +3,8 @@
 Cove is designed for a **trusted private LAN** with a small number of known users.
 It is not a public-internet service.
 
+> See [SECURITY_AUDIT.md](SECURITY_AUDIT.md) for the latest test matrix and actions.
+>
 > **Current deployment: plain HTTP on port 3000.** TLS was disabled at the owner's
 > request for now. Credentials, session cookies and file contents are **not encrypted
 > in transit**. Anyone who can sniff the LAN can capture them. Treat the network as
@@ -15,11 +17,11 @@ It is not a public-internet service.
 | Transport | Plain HTTP on port 3000 on the LAN (TLS disabled); Tailscale access is encrypted by WireGuard |
 | Sessions | `HttpOnly`, `SameSite=Lax` cookie (not `Secure` in HTTP mode), SHA-256 token hashes, 30-day absolute + 7-day idle expiry, 10-session cap, revoke-all |
 | Passwords | bcrypt cost 12, minimum 8 chars with 3 character classes, no username, small common-password blocklist, forced change of the seeded default |
-| Login | Generic errors, dummy-hash timing equalisation, persisted throttling (10 per account+IP, 40 per IP per 15 min, 15-minute lock) |
+| Login | Generic errors, dummy-hash timing equalisation, persisted throttling (10 per account; 40 per IP only behind a trusted proxy), 15-minute lock |
 | Second factor | Optional TOTP (SHA-1, 6 digits, 30 s, ±1 window), QR/secret setup, admin reset |
 | CSRF | SameSite=Lax plus `Origin`/`Sec-Fetch-Site` validation on every mutation |
 | Browser | CSP, nosniff, SAMEORIGIN framing, no-referrer, Permissions-Policy, COOP/CORP, no `X-Powered-By` |
-| Files | Canonicalised paths inside the storage root, no symlinks, chunk and total-size caps |
+| Files | Canonicalised paths plus realpath checks inside the storage root (symlink escape blocked), chunk and total-size caps |
 | Stored XSS | SVG/HTML/XML/JS/CSS served as `application/octet-stream` with `Content-Disposition: attachment` |
 | Archives | ZIP walker refuses symlinks, so it cannot follow links outside the space |
 | Authorisation | Every API re-checks the session and per-space access; private paths map to the caller's own folder |

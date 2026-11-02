@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import type { Item } from "./types";
 import VideoPlayer from "./VideoPlayer";
+import PhotoViewer from "./PhotoViewer";
+import PdfViewer from "./PdfViewer";
 import { ChevronLeft, ChevronRight, CloseIcon, DownloadIcon } from "./icons";
 
 const VIEWABLE = ["image", "video", "audio", "pdf", "text"];
@@ -52,26 +54,38 @@ export default function Viewer({
   const next = index >= 0 && index < siblings.length - 1 ? siblings[index + 1] : null;
   const stream = `/api/stream?path=${encodeURIComponent(current.path)}`;
   const download = `${stream}&download=1`;
-  const needsPreview = /\.(heic|heif|tiff?)$/i.test(current.name);
-  const imageSrc = needsPreview
-    ? `/api/preview?path=${encodeURIComponent(current.path)}&v=${current.mtime}`
-    : stream;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        // The PDF and photo viewers handle their own keys, but closing is safe.
+        if (current.kind !== "image") onClose();
+        return;
+      }
+      if (current.kind === "image" || current.kind === "pdf") return;
       if (event.key === "ArrowLeft" && previous) onSelect(previous);
       if (event.key === "ArrowRight" && next) onSelect(next);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, onSelect, previous, next]);
+  }, [onClose, onSelect, previous, next, current.kind]);
+
+  if (current.kind === "image") {
+    return (
+      <PhotoViewer
+        items={items}
+        current={current}
+        onClose={onClose}
+        onSelect={onSelect}
+      />
+    );
+  }
 
   return (
     <div className="viewer">
       <div className="viewer-head">
         <div className="viewer-title">{current.name}</div>
-        {index >= 0 ? (
+        {index >= 0 && current.kind !== "pdf" ? (
           <span className="muted" style={{ fontSize: 12 }}>
             {index + 1} / {siblings.length}
           </span>
@@ -85,14 +99,12 @@ export default function Viewer({
       </div>
 
       <div className="viewer-stage">
-        {current.kind === "image" ? (
-          <img src={imageSrc} alt={current.name} />
-        ) : current.kind === "video" ? (
+        {current.kind === "video" ? (
           <VideoPlayer key={current.path} item={current} />
         ) : current.kind === "audio" ? (
           <audio controls autoPlay src={stream} />
         ) : current.kind === "pdf" ? (
-          <iframe src={stream} title={current.name} />
+          <PdfViewer key={current.path} item={current} />
         ) : current.kind === "text" ? (
           <TextPreview item={current} />
         ) : (
@@ -104,12 +116,12 @@ export default function Viewer({
           </div>
         )}
 
-        {previous ? (
+        {current.kind !== "pdf" && previous ? (
           <button className="nav-arrow left" onClick={() => onSelect(previous)} title="Previous">
             <ChevronLeft />
           </button>
         ) : null}
-        {next ? (
+        {current.kind !== "pdf" && next ? (
           <button className="nav-arrow right" onClick={() => onSelect(next)} title="Next">
             <ChevronRight />
           </button>

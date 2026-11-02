@@ -433,6 +433,14 @@ export default function VideoPlayer({ item }: { item: Item }) {
     }
   }
 
+  function holdControls() {
+    setControlsVisible(true);
+    if (hideTimer.current) {
+      window.clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+  }
+
   function togglePlay() {
     const video = videoRef.current;
     if (!video) return;
@@ -633,7 +641,12 @@ export default function VideoPlayer({ item }: { item: Item }) {
         </button>
       ) : null}
 
-      <div className="vp-controls" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="vp-controls"
+        onClick={(event) => event.stopPropagation()}
+        onMouseEnter={holdControls}
+        onMouseLeave={showControls}
+      >
         <div className="vp-progress">
           <input
             className="vp-seek"

@@ -32,6 +32,32 @@ for (const dir of [
 
 export type SpaceUser = { username: string };
 
+/** Prevent a symlink inside a space from escaping that space. */
+function assertRealInside(base: string, target: string) {
+  const baseReal = fs.realpathSync(base);
+  let probe = target;
+  for (let depth = 0; depth < 64; depth += 1) {
+    try {
+      fs.lstatSync(probe);
+      break;
+    } catch {
+      const parent = path.dirname(probe);
+      if (parent === probe) break;
+      probe = parent;
+    }
+  }
+  let real: string;
+  try {
+    real = fs.realpathSync(probe);
+  } catch {
+    throw new Error("Invalid path");
+  }
+  const relative = path.relative(baseReal, real);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error("Invalid path");
+  }
+}
+
 function cleanRel(rel: string | null | undefined) {
   return (rel || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
 }
@@ -64,6 +90,7 @@ export function resolveUserPath(
   if (relative.startsWith("..") || path.isAbsolute(relative)) {
     throw new Error("Invalid path");
   }
+  assertRealInside(base, abs);
   return { abs, virtual: [space, ...rest].join("/") };
 }
 

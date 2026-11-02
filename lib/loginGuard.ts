@@ -24,10 +24,9 @@ function blockedSeconds(row: Row | null) {
 }
 
 export function loginBlocked(username: string, ip: string) {
-  return Math.max(
-    blockedSeconds(read(`u:${username.toLowerCase()}|${ip}`)),
-    blockedSeconds(read(`i:${ip}`)),
-  );
+  const account = blockedSeconds(read(`u:${username.toLowerCase()}|${ip}`));
+  if (ip === "local") return account;
+  return Math.max(account, blockedSeconds(read(`i:${ip}`)));
 }
 
 export function noteLoginFailure(username: string, ip: string) {
@@ -52,7 +51,7 @@ export function noteLoginFailure(username: string, ip: string) {
   };
 
   apply(`u:${username.toLowerCase()}|${ip}`, USER_MAX);
-  apply(`i:${ip}`, IP_MAX);
+  if (ip !== "local") apply(`i:${ip}`, IP_MAX);
 }
 
 export function clearLoginFailures(username: string, ip: string) {

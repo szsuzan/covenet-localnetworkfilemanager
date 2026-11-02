@@ -289,3 +289,21 @@ export const ReplayIcon = (p: Props) => (
     <path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" />
   </Svg>
 );
+
+export const ZoomInIcon = (p: Props) => (
+  <Svg {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5M8 11h6M11 8v6" />
+  </Svg>
+);
+export const ZoomOutIcon = (p: Props) => (
+  <Svg {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5M8 11h6" />
+  </Svg>
+);
+export const RotateIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="M20 11a8 8 0 1 1-2.3-5.7M20 4v7h-7" />
+  </Svg>
+);

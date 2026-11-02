@@ -35,7 +35,11 @@ export function validatePassword(password: string, username: string) {
   return null;
 }
 
+const TRUST_PROXY = process.env.TRUST_PROXY === "1";
+
 export function clientIp(req: { headers: Headers }) {
+  // Direct HTTP exposure: X-Forwarded-For is spoofable, so do not trust it.
+  if (!TRUST_PROXY) return "local";
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
   return req.headers.get("x-real-ip") || "local";
