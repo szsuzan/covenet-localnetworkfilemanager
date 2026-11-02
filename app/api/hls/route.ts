@@ -12,14 +12,17 @@ export async function POST(req: NextRequest) {
   const user = await apiUser();
   if (!user) return fail("Not signed in", 401);
 
-  const body = (await req.json().catch(() => null)) as { path?: string } | null;
+  const body = (await req.json().catch(() => null)) as
+    | { path?: string; start?: number }
+    | null;
   const rel = body?.path || "";
+  const start = Math.max(0, Math.floor(Number(body?.start) || 0));
   try {
     const abs = resolveUserPath(user, rel).abs;
     const stat = await fs.promises.stat(abs);
     if (!stat.isFile()) return fail("Not a file", 400);
-    const key = hlsKey(relPath(abs), stat);
-    const state = startTranscode(abs, key);
+    const key = hlsKey(relPath(abs), stat, start);
+    const state = startTranscode(abs, key, start);
     return NextResponse.json({ key, state });
   } catch {
     return fail("Not found", 404);

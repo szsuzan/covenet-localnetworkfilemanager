@@ -29,6 +29,7 @@ URL over HTTPS; there is no separate HTTP port and no mux process.
 - Node.js 20.9+ and npm (tested with Node 26).
 - `ffmpeg`/`ffprobe` for video metadata, HLS and thumbnails.
 - ImageMagick (`magick` or `convert`) for HEIC/TIFF previews.
+- `pdftoppm` (poppler) for PDF thumbnails.
 - Caddy with the `http_redirect` listener wrapper (tested with 2.11.7).
 - `rsync` and `sqlite3` for backups.
 - Optional: `tailscale`, `dnsmasq`, `ufw` for remote access, hotspot and firewall.

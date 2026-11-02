@@ -35,13 +35,12 @@ export default function VideoPlayer({ item }: { item: Item }) {
   const hideTimer = useRef<number | null>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const restored = useRef(false);
-  const pendingSeek = useRef<number | null>(null);
-  const pendingPlay = useRef(false);
 
   const [mode, setMode] = useState<Mode>("probing");
   const [error, setError] = useState("");
   const [elapsed, setElapsed] = useState(0);
   const [key, setKey] = useState("");
+  const [hlsStart, setHlsStart] = useState(0);
   const [forceHls, setForceHls] = useState(false);
 
   const [playing, setPlaying] = useState(false);
@@ -65,18 +64,14 @@ export default function VideoPlayer({ item }: { item: Item }) {
   const saveProgress = useCallback(
     (keepalive = false) => {
       const video = videoRef.current;
-      const total = sourceDuration || video?.duration || 0;
-      if (
-        !video ||
-        !total ||
-        !Number.isFinite(total) ||
-        video.currentTime < 1 ||
-        pendingSeek.current !== null
-      ) {
+      const offset = mode === "hls" ? hlsStart : 0;
+      const position = offset + (video?.currentTime || 0);
+      const total = sourceDuration || (video ? offset + video.duration : 0);
+      if (!video || !total || !Number.isFinite(total) || position < 1) {
         return;
       }
       try {
-        localStorage.setItem(positionKey, String(video.currentTime));
+        localStorage.setItem(positionKey, String(position));
       } catch {
         /* ignore */
       }
@@ -85,13 +80,13 @@ export default function VideoPlayer({ item }: { item: Item }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           path: item.path,
-          position: video.currentTime,
+          position,
           duration: total,
         }),
         keepalive,
       }).catch(() => {});
     },
-    [item.path, positionKey, sourceDuration],
+    [hlsStart, item.path, mode, positionKey, sourceDuration],
   );
 
   const restorePosition = useCallback(async () => {
@@ -113,49 +108,33 @@ export default function VideoPlayer({ item }: { item: Item }) {
         saved = 0;
       }
     }
-    const total = sourceDuration || video.duration;
+    const total = sourceDuration || (mode === "hls" ? hlsStart + video.duration : video.duration);
     if (saved > 1 && Number.isFinite(total) && total > 0) {
       // Ignore only the final ~10% so short clips still resume.
       const endGuard = Math.min(10, total * 0.1);
       if (saved < total - endGuard) {
-        if (mode === "hls" && saved > video.duration - 0.5) {
-          // HLS duration grows while transcoding; seek once enough segments exist.
-          pendingSeek.current = saved;
-          pendingPlay.current = true;
-          setWaiting(true);
+        if (mode === "hls") {
+          seekTo(saved);
         } else {
           video.currentTime = saved;
           setCurrent(saved);
         }
       }
     }
-  }, [item.path, positionKey, sourceDuration, mode]);
+  }, [hlsStart, item.path, mode, positionKey, sourceDuration]);
 
-  function resumePending() {
-    const video = videoRef.current;
-    const pending = pendingSeek.current;
-    if (!video || pending == null) return;
-    if (Number.isFinite(video.duration) && video.duration > pending + 0.5) {
-      pendingSeek.current = null;
-      video.currentTime = pending;
-      setCurrent(pending);
-      setWaiting(false);
-      if (pendingPlay.current) {
-        pendingPlay.current = false;
-        void video.play().catch(() => {});
-      }
-    }
-  }
-
-  async function prepareHls() {
+  async function prepareHls(start = 0) {
+    const offset = Math.max(0, Math.floor(start));
+    setHlsStart(offset);
     setMode("preparing");
     setError("");
     setElapsed(0);
+    setKey("");
     try {
       const res = await fetch("/api/hls", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: item.path }),
+        body: JSON.stringify({ path: item.path, start: offset }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.key) {
@@ -174,7 +153,6 @@ export default function VideoPlayer({ item }: { item: Item }) {
   useEffect(() => {
     setForceHls(false);
     restored.current = false;
-    pendingSeek.current = null;
   }, [item.path]);
 
   useEffect(() => {
@@ -182,12 +160,12 @@ export default function VideoPlayer({ item }: { item: Item }) {
     setMode("probing");
     setError("");
     setKey("");
+    setHlsStart(0);
     setElapsed(0);
     setCurrent(0);
     setDuration(0);
     setSourceDuration(0);
     setWaiting(true);
-    pendingPlay.current = false;
 
     (async () => {
       try {
@@ -455,21 +433,29 @@ export default function VideoPlayer({ item }: { item: Item }) {
   function seekTo(value: number) {
     const video = videoRef.current;
     if (!video) return;
-    const total = Math.max(duration, sourceDuration) || video.duration || 0;
+    const total =
+      sourceDuration ||
+      (mode === "hls" ? hlsStart + video.duration : video.duration) ||
+      0;
     const target = Math.min(Math.max(0, value), total);
 
-    if (mode === "hls" && target > video.duration + 0.5) {
-      // Not transcoded that far yet: pause and jump when the segment exists.
-      pendingSeek.current = target;
-      pendingPlay.current = !video.paused;
-      video.pause();
+    if (mode === "hls") {
+      const local = target - hlsStart;
+      const available = Number.isFinite(video.duration) ? video.duration : 0;
+      if (!available || local < -0.5 || local > available + 0.5) {
+        // Start a new transcode near the target instead of waiting for the
+        // sequentially transcoded stream to reach it.
+        const start = Math.max(0, Math.floor(target - 2));
+        setCurrent(target);
+        setWaiting(true);
+        void prepareHls(start);
+        return;
+      }
+      video.currentTime = Math.min(Math.max(0, local), available);
       setCurrent(target);
-      setWaiting(true);
       return;
     }
 
-    pendingSeek.current = null;
-    pendingPlay.current = false;
     video.currentTime = Math.min(target, video.duration || target);
     setCurrent(video.currentTime);
   }
@@ -477,7 +463,8 @@ export default function VideoPlayer({ item }: { item: Item }) {
   function seekBy(delta: number) {
     const video = videoRef.current;
     if (!video) return;
-    seekTo(video.currentTime + delta);
+    const offset = mode === "hls" ? hlsStart : 0;
+    seekTo(offset + video.currentTime + delta);
     showControls();
   }
 
@@ -533,10 +520,11 @@ export default function VideoPlayer({ item }: { item: Item }) {
   function syncProgress() {
     const video = videoRef.current;
     if (!video) return;
-    setCurrent(video.currentTime);
-    setDuration(Number.isFinite(video.duration) ? video.duration : 0);
+    const offset = mode === "hls" ? hlsStart : 0;
+    setCurrent(offset + video.currentTime);
+    setDuration(Number.isFinite(video.duration) ? offset + video.duration : 0);
     if (video.buffered.length > 0) {
-      setBuffered(video.buffered.end(video.buffered.length - 1));
+      setBuffered(offset + video.buffered.end(video.buffered.length - 1));
     }
     setMuted(video.muted);
     setVolume(video.volume);
@@ -601,10 +589,7 @@ export default function VideoPlayer({ item }: { item: Item }) {
         }}
         onTimeUpdate={syncProgress}
         onProgress={syncProgress}
-        onDurationChange={() => {
-          syncProgress();
-          resumePending();
-        }}
+        onDurationChange={syncProgress}
         onPlay={() => {
           setPlaying(true);
           setWaiting(false);
@@ -616,9 +601,10 @@ export default function VideoPlayer({ item }: { item: Item }) {
           saveProgress();
         }}
         onEnded={() => {
+          const video = videoRef.current;
           setPlaying(false);
           setControlsVisible(true);
-          setCurrent(videoRef.current?.duration || 0);
+          setCurrent(hlsStart + (video?.duration || 0));
           saveProgress();
         }}
         onWaiting={() => setWaiting(true)}

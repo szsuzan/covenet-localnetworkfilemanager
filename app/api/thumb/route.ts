@@ -5,9 +5,9 @@ import { execFile } from "node:child_process";
 import { NextResponse, type NextRequest } from "next/server";
 import sharp from "sharp";
 import { apiUser, fail } from "@/lib/api";
-import { kindOf } from "@/lib/kinds";
+import { kindOf, type Kind } from "@/lib/kinds";
 import { imageThumbLimit, videoThumbLimit } from "@/lib/limits";
-import { relPath, resolveUserPath, THUMB_ROOT } from "@/lib/paths";
+import { isHidden, relPath, resolveUserPath, THUMB_ROOT } from "@/lib/paths";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,6 +50,91 @@ function ffmpegThumb(input: string, output: string) {
   });
 }
 
+function pdfThumb(input: string, output: string) {
+  const prefix = output.replace(/\.jpg$/i, "");
+  return new Promise<void>((resolve, reject) => {
+    execFile(
+      "pdftoppm",
+      ["-f", "1", "-l", "1", "-singlefile", "-scale-to", "480", "-jpeg", input, prefix],
+      { timeout: 30_000 },
+      (error) => (error ? reject(error) : resolve()),
+    );
+  }).then(async () => {
+    await sharp(output)
+      .resize(480, 360, { fit: "cover", position: "centre" })
+      .jpeg({ quality: 82 })
+      .toFile(`${output}.2`);
+    fs.renameSync(`${output}.2`, output);
+  });
+}
+
+async function createThumb(kind: Kind, input: string, output: string) {
+  if (kind === "pdf") {
+    await imageThumbLimit(() => pdfThumb(input, output));
+    return;
+  }
+  if (kind === "image") {
+    const ext = path.extname(input).toLowerCase();
+    const magickFirst = [".heic", ".heif", ".tif", ".tiff"].includes(ext);
+    await imageThumbLimit(async () => {
+      if (magickFirst) {
+        await magickThumb(input, output);
+        return;
+      }
+      try {
+        await sharp(input, { failOn: "none" })
+          .rotate()
+          .resize(480, 360, { fit: "cover", position: "centre" })
+          .jpeg({ quality: 80, mozjpeg: true })
+          .toFile(output);
+      } catch {
+        await magickThumb(input, output);
+      }
+    });
+    return;
+  }
+  await videoThumbLimit(async () => {
+    await ffmpegThumb(input, output);
+    await sharp(output)
+      .resize(480, 360, { fit: "cover" })
+      .jpeg({ quality: 80 })
+      .toFile(`${output}.2`);
+    fs.renameSync(`${output}.2`, output);
+  });
+}
+
+/** Find a representative image/video/PDF inside a folder (or nested folder). */
+async function findCover(
+  dir: string,
+  depth = 0,
+): Promise<{ abs: string; kind: Kind } | null> {
+  if (depth > 2) return null;
+  let entries: fs.Dirent[];
+  try {
+    entries = await fs.promises.readdir(dir, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+  entries.sort((a, b) => a.name.localeCompare(b.name));
+  let scanned = 0;
+  for (const entry of entries) {
+    if (scanned++ > 200) break;
+    if (isHidden(entry.name) || entry.isSymbolicLink()) continue;
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      const nested = await findCover(full, depth + 1);
+      if (nested) return nested;
+      continue;
+    }
+    if (!entry.isFile()) continue;
+    const kind = kindOf(entry.name);
+    if (kind === "image" || kind === "video" || kind === "pdf") {
+      return { abs: full, kind };
+    }
+  }
+  return null;
+}
+
 const inflight = new Map<string, Promise<void>>();
 
 export async function GET(req: NextRequest) {
@@ -70,14 +155,29 @@ export async function GET(req: NextRequest) {
   } catch {
     return fail("Not found", 404);
   }
-  if (!stat.isFile()) return fail("Not a file", 400);
+  if (!stat.isFile() && !stat.isDirectory()) return fail("Not a file", 400);
 
-  const kind = kindOf(path.basename(abs));
-  if (kind !== "image" && kind !== "video") return fail("No thumbnail", 404);
+  const kind = kindOf(path.basename(abs), stat.isDirectory());
+  if (!["image", "video", "pdf", "folder"].includes(kind)) {
+    return fail("No thumbnail", 404);
+  }
+
+  let targetAbs = abs;
+  let targetKind = kind;
+  let targetStat = stat;
+  if (kind === "folder") {
+    const cover = await findCover(abs);
+    if (!cover) return fail("No thumbnail", 404);
+    targetAbs = cover.abs;
+    targetKind = cover.kind;
+    targetStat = await fs.promises.stat(targetAbs);
+  }
 
   const key = crypto
     .createHash("sha1")
-    .update(`${relPath(abs)}|${stat.size}|${stat.mtimeMs}|v3`)
+    .update(
+      `${relPath(abs)}|${stat.size}|${stat.mtimeMs}|${relPath(targetAbs)}|${targetStat.size}|${targetStat.mtimeMs}|v4`,
+    )
     .digest("hex");
   const cached = path.join(THUMB_ROOT, `${key}.jpg`);
 
@@ -87,34 +187,7 @@ export async function GET(req: NextRequest) {
       job = (async () => {
         const temp = `${cached}.${process.pid}.${Math.random().toString(36).slice(2, 8)}.tmp.jpg`;
         try {
-          if (kind === "image") {
-            const ext = path.extname(abs).toLowerCase();
-            const magickFirst = [".heic", ".heif", ".tif", ".tiff"].includes(ext);
-            await imageThumbLimit(async () => {
-              if (magickFirst) {
-                await magickThumb(abs, temp);
-                return;
-              }
-              try {
-                await sharp(abs, { failOn: "none" })
-                  .rotate()
-                  .resize(480, 360, { fit: "cover", position: "centre" })
-                  .jpeg({ quality: 80, mozjpeg: true })
-                  .toFile(temp);
-              } catch {
-                await magickThumb(abs, temp);
-              }
-            });
-          } else {
-            await videoThumbLimit(async () => {
-              await ffmpegThumb(abs, temp);
-              await sharp(temp)
-                .resize(480, 360, { fit: "cover" })
-                .jpeg({ quality: 80 })
-                .toFile(`${temp}.2`);
-              fs.renameSync(`${temp}.2`, temp);
-            });
-          }
+          await createThumb(targetKind, targetAbs, temp);
           fs.renameSync(temp, cached);
         } catch (error) {
           fs.rmSync(temp, { force: true });

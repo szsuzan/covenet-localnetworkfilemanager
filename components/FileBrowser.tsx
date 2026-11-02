@@ -692,7 +692,12 @@ export default function FileBrowser({
 
   function Thumb({ item }: { item: Item }) {
     const [failed, setFailed] = useState(false);
-    const preview = (item.kind === "image" || item.kind === "video") && !failed;
+    const preview =
+      (item.kind === "image" ||
+        item.kind === "video" ||
+        item.kind === "pdf" ||
+        item.kind === "folder") &&
+      !failed;
     return (
       <div className={`thumb ${item.kind}`}>
         {preview ? (
@@ -711,6 +716,8 @@ export default function FileBrowser({
           <span className="badge">
             {item.position && item.duration ? `${Math.round((item.position / item.duration) * 100)}%` : "VIDEO"}
           </span>
+        ) : item.kind === "pdf" ? (
+          <span className="badge">PDF</span>
         ) : null}
       </div>
     );

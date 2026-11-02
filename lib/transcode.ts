@@ -5,10 +5,10 @@ import { spawn } from "node:child_process";
 import { transcodeConcurrency } from "./limits";
 import { HLS_ROOT } from "./paths";
 
-export function hlsKey(rel: string, stat: fs.Stats) {
+export function hlsKey(rel: string, stat: fs.Stats, start = 0) {
   return crypto
     .createHash("sha1")
-    .update(`${rel}|${stat.size}|${stat.mtimeMs}`)
+    .update(`${rel}|${stat.size}|${stat.mtimeMs}|${Math.max(0, Math.floor(start))}`)
     .digest("hex");
 }
 
@@ -44,7 +44,7 @@ function runningPid(key: string) {
 
 const activeKeys = new Set<string>();
 const queuedKeys = new Set<string>();
-const pending: Array<{ abs: string; key: string }> = [];
+const pending: Array<{ abs: string; key: string; start: number }> = [];
 let active = 0;
 
 export function isQueued(key: string) {
@@ -61,11 +61,11 @@ function pump() {
     queuedKeys.delete(job.key);
     activeKeys.add(job.key);
     active += 1;
-    spawnJob(job.abs, job.key);
+    spawnJob(job.abs, job.key, job.start);
   }
 }
 
-function spawnJob(abs: string, key: string) {
+function spawnJob(abs: string, key: string, start: number) {
   const dir = hlsDir(key);
 
   // Stale directory from an interrupted run: start clean.
@@ -77,6 +77,7 @@ function spawnJob(abs: string, key: string) {
     "ffmpeg",
     [
       "-hide_banner", "-y",
+      ...(start > 0 ? ["-ss", String(start)] : []),
       "-i", abs,
       "-map", "0:v:0",
       "-map", "0:a:0?",
@@ -117,12 +118,16 @@ function spawnJob(abs: string, key: string) {
  * Queue an HLS transcode. At most TRANSCODE_CONCURRENCY (default 2) run at once;
  * the rest wait so three viewers cannot pin every CPU core.
  */
-export function startTranscode(abs: string, key: string): "ready" | "running" {
+export function startTranscode(
+  abs: string,
+  key: string,
+  start = 0,
+): "ready" | "running" {
   if (isReady(key)) return "ready";
   if (activeKeys.has(key) || queuedKeys.has(key)) return "running";
   if (runningPid(key)) return "running";
 
-  pending.push({ abs, key });
+  pending.push({ abs, key, start: Math.max(0, Math.floor(start)) });
   queuedKeys.add(key);
   pump();
   return "running";

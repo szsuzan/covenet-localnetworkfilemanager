@@ -145,7 +145,7 @@ at least 8 characters and 3 of: lowercase, uppercase, numbers, symbols.
 - Multi-select, bulk ZIP download, folder download as ZIP, bulk cut/delete
 - Drag-and-drop, whole-folder and phone-camera uploads; pause/resume/cancel
 - Delete to trash with restore; automatic purge after 30 days
-- Image thumbnails and lightbox; video streaming with resume position
+- Image, folder and PDF thumbnails; image lightbox; video streaming with resume position
 - Automatic HLS transcoding for MKV/HEVC/AVI and other non-native formats
 - Audio, PDF and text preview
 - Admin: users, roles, upload permission, reset password/2FA, storage dashboard,
