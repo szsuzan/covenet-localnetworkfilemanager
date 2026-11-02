@@ -23,6 +23,7 @@ Next.js 16 · SQLite · local filesystem · ffmpeg · sharp
 - Port 3000 serves **HTTPS**; plain `http://` gets a `308` redirect to the same
   URL over HTTPS. UFW allows 3000 from `LAN-SUBNET`, `tailscale0` and the
   hotspot subnet.
+- Apply or repair the firewall with `sudo ./scripts/firewall.sh`.
 
 ### First time on each device
 
@@ -289,5 +290,6 @@ app/api/upload     chunked uploads
 components/        FileBrowser, Viewer, VideoPlayer, SecurityPanel, AdminPanel
 deploy/Caddyfile      TLS reverse proxy
 deploy/issue-cert.sh  refresh the CA-signed certificate (after IP changes)
+scripts/firewall.sh   scoped LAN/Tailscale/hotspot UFW rules
 scripts/backup.sh     hardlink snapshot backup
 ```

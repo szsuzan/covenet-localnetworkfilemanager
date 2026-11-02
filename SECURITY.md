@@ -52,8 +52,9 @@ It is not a public-internet service.
 7. **Files are not encrypted at rest.** Full-disk encryption is recommended.
 8. **No malware scanning.** Uploads are stored as-is; do not run untrusted binaries.
 9. **No per-folder ACLs.** Access is Public vs. your own Private space.
-10. **SSH is active with password authentication.** Restrict it to the LAN and
-    Tailscale and use keys before exposing the machine.
+10. **SSH is active with password authentication.** Run
+    `sudo ./scripts/firewall.sh` to scope it to the LAN and Tailscale, and use
+    keys before exposing the machine.
 11. **Backups are on the same disk and unencrypted.** Use an external, encrypted
     destination.
 12. **No per-user quota.** A signed-in user can fill the disk.

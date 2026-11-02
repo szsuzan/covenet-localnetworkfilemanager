@@ -57,7 +57,6 @@ case "$ACTION" in
       sudo ufw allow in on "$IFACE" to any port 67 proto udp comment "Cove hotspot DHCP" >/dev/null
     fi
     allow_ufw 3000 tcp "Cove hotspot"
-    allow_ufw 22 tcp "Cove hotspot SSH"
     allow_ufw 53 udp "Cove hotspot DNS"
     allow_ufw 5353 udp "Cove hotspot mDNS"
 

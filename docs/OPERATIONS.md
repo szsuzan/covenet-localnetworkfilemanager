@@ -191,15 +191,33 @@ device. Port 3000 is the only inbound port; no public funnel is needed.
 
 ### Firewall
 
-Keep 3000 scoped to trusted networks:
+Apply the scoped rules with:
 
 ```bash
-sudo ufw allow from LAN-SUBNET to any port 3000 proto tcp comment 'Cove LAN'
-sudo ufw allow in on tailscale0 to any port 3000 proto tcp comment 'Cove Tailscale'
-sudo ufw allow from 10.42.0.0/24 to any port 3000 proto tcp comment 'Cove hotspot'
+sudo ./scripts/firewall.sh
 ```
 
-Do not forward port 3000 from the internet.
+The script detects the LAN interface/subnet, removes old broad rules for ports
+22, 443, 8443, 3000, 53, 67 and 5353, then allows only:
+
+| Port | Source |
+|---|---|
+| 3000 TCP/UDP | LAN, hotspot, `tailscale0` |
+| 22 TCP | LAN, `tailscale0` |
+| 5353 UDP | LAN and hotspot (mDNS) |
+| 67 UDP | Wi-Fi interface (hotspot DHCP) |
+| 53 UDP/TCP | hotspot subnet (DNS) |
+
+It keeps the default incoming policy at deny and does not open SSH on the
+hotspot. Run it again after a LAN subnet change. Override the hotspot subnet with
+`HOTSPOT_CIDR=…` if you changed it.
+
+Do not forward port 3000 from the internet. Confirm the result with:
+
+```bash
+sudo ufw status numbered
+ss -ltnp | grep -E ':3000|:22'
+```
 
 ### Hotspot
 

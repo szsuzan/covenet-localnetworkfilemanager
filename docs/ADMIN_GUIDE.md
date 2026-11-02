@@ -180,4 +180,4 @@ for real backups.
 - [ ] Do not expose port 3000 to the internet.
 - [ ] Keep the OS, Node, ffmpeg, ImageMagick and npm packages updated.
 - [ ] Verify backups can be restored, not only that they run.
-- [ ] Restrict SSH and use key authentication; see [Security](../SECURITY.md).
+- [ ] Run `sudo ./scripts/firewall.sh` and use SSH key authentication; see [Security](../SECURITY.md).
