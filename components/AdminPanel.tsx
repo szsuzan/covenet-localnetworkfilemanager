@@ -44,6 +44,7 @@ type Hotspot = {
   wifiQr: string | null;
   urlQr: string | null;
   setupCommand: string;
+  starting?: boolean;
   error?: string;
 };
 
@@ -97,6 +98,28 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
     }
   }
 
+  async function pollHotspot(attempt = 0) {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const res = await fetch("/api/admin/hotspot");
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setHotspot({ ...data, starting: !data.running });
+        if (data.ssid) setHotspotSsid(data.ssid);
+        if (data.password) setHotspotPassword(data.password);
+        if (data.running) return;
+      }
+    } catch {
+      /* the network may be changing */
+    }
+    if (attempt < 8) {
+      void pollHotspot(attempt + 1);
+    } else {
+      setHotspot((current) => (current ? { ...current, starting: false } : current));
+      setHotspotError("Could not confirm the hotspot state. Check the laptop's Wi-Fi.");
+    }
+  }
+
   async function hotspotAction(action: "start" | "stop") {
     if (action === "start" && !localAdmin) {
       setHotspotError(
@@ -121,6 +144,7 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
       setHotspot(data);
       if (data.ssid) setHotspotSsid(data.ssid);
       if (data.password) setHotspotPassword(data.password);
+      if (data.starting) void pollHotspot();
     } catch (actionError) {
       setHotspotError(
         actionError instanceof Error ? actionError.message : "Hotspot action failed",
@@ -303,6 +327,13 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
                   It installs dnsmasq and a narrow sudo helper. Needs internet
                   once.
                 </p>
+              </div>
+            ) : hotspot.starting ? (
+              <div className="hotspot-status">
+                <div className="vp-spinner" />
+                <span className="muted">
+                  Starting the hotspot… this page may lose network briefly.
+                </span>
               </div>
             ) : hotspot.running ? (
               <>

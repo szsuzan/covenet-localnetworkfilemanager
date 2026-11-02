@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { NextResponse, type NextRequest } from "next/server";
 import QRCode from "qrcode";
 import { apiUser, fail, originOk } from "@/lib/api";
@@ -26,6 +26,7 @@ type HotspotStatus = {
   wifiQr: string | null;
   urlQr: string | null;
   setupCommand: string;
+  starting?: boolean;
   error?: string;
 };
 
@@ -184,30 +185,42 @@ export async function POST(req: NextRequest) {
     // A second start request used to delete and recreate the active AP.
     const alreadyRunning = await status();
     if (alreadyRunning.running) return NextResponse.json(alreadyRunning);
+    if (!alreadyRunning.available) return fail("Hotspot helper is not ready", 409);
+
+    fs.mkdirSync(path.dirname(SAVED), { recursive: true });
+    fs.writeFileSync(SAVED, JSON.stringify({ ssid, password }), { mode: 0o600 });
+    audit(admin, "admin.hotspot.start", ssid, req);
 
     try {
-      await run("sudo", ["-n", HELPER, "start", ssid, password]);
-      fs.mkdirSync(path.dirname(SAVED), { recursive: true });
-      fs.writeFileSync(SAVED, JSON.stringify({ ssid, password }), { mode: 0o600 });
-      audit(admin, "admin.hotspot.start", ssid, req);
-    } catch (startError) {
-      const message =
-        startError instanceof Error ? startError.message : "Could not start hotspot";
-      return fail(
-        message.includes("password is required")
-          ? "Hotspot helper needs the one-time sudo setup"
-          : message,
-        409,
+      // Starting the AP changes the laptop's network, which aborts in-flight
+      // browser requests. Let this response leave first, then run the helper.
+      const child = spawn(
+        "/bin/sh",
+        [
+          "-c",
+          'sleep 1.5; exec sudo -n "$0" start "$1" "$2"',
+          HELPER,
+          ssid,
+          password,
+        ],
+        { detached: true, stdio: "ignore" },
       );
+      child.unref();
+    } catch {
+      return fail("Could not launch the hotspot helper", 500);
     }
 
-    // Give NetworkManager a moment to assign the hotspot address.
-    let current = await status();
-    for (let attempt = 0; attempt < 4 && !current.ip; attempt += 1) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      current = await status();
-    }
-    return NextResponse.json(current);
+    return NextResponse.json({
+      ...alreadyRunning,
+      running: false,
+      starting: true,
+      ssid,
+      password,
+      ip: "",
+      url: "",
+      wifiQr: null,
+      urlQr: null,
+    });
   }
 
   if (body.action === "stop") {
