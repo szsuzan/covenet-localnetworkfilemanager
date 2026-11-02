@@ -35,11 +35,17 @@ export default function VideoPlayer({ item }: { item: Item }) {
   const hideTimer = useRef<number | null>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const restored = useRef(false);
+  const resumeAfterSeek = useRef(false);
+  const scrubbingRef = useRef(false);
 
   const [mode, setMode] = useState<Mode>("probing");
   const [error, setError] = useState("");
   const [key, setKey] = useState("");
   const [hlsStart, setHlsStart] = useState(0);
+  const [seekKey, setSeekKey] = useState("");
+  const [seekStart, setSeekStart] = useState(0);
+  const [scrubbing, setScrubbing] = useState(false);
+  const [scrubValue, setScrubValue] = useState(0);
   const [aspect, setAspect] = useState(16 / 9);
   const [forceHls, setForceHls] = useState(false);
 
@@ -148,10 +154,36 @@ export default function VideoPlayer({ item }: { item: Item }) {
     }
   }
 
+  async function beginHlsSeek(start: number) {
+    const offset = Math.max(0, Math.floor(start));
+    setSeekStart(offset);
+    try {
+      const res = await fetch("/api/hls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: item.path, start: offset }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.key) {
+        setError(data?.error || "Could not seek in this video");
+        setMode("error");
+        return;
+      }
+      setSeekKey(data.key);
+    } catch {
+      setError("Could not reach the server");
+      setMode("error");
+    }
+  }
+
   // Probe once per file (or after a direct-play failure).
   useEffect(() => {
     setForceHls(false);
     setAspect(16 / 9);
+    setSeekKey("");
+    setScrubbing(false);
+    scrubbingRef.current = false;
+    resumeAfterSeek.current = false;
     restored.current = false;
   }, [item.path]);
 
@@ -226,6 +258,41 @@ export default function VideoPlayer({ item }: { item: Item }) {
       }).catch(() => {});
     };
   }, [key]);
+
+  // Wait for the seek transcode to produce its first segment, while keeping
+  // the current video frame and controls on screen.
+  useEffect(() => {
+    if (!seekKey) return;
+    let cancelled = false;
+    let attempts = 0;
+    const tick = async () => {
+      attempts += 1;
+      try {
+        const res = await fetch(`/api/hls/${seekKey}`);
+        const data = await res.json().catch(() => null);
+        if (cancelled) return;
+        if (data?.ready) {
+          setHlsStart(seekStart);
+          setKey(seekKey);
+          setSeekKey("");
+          return;
+        }
+        if (attempts >= 40) {
+          setSeekKey("");
+          setWaiting(false);
+          setError("Could not load that part of the video");
+        }
+      } catch {
+        /* keep polling while the server prepares segments */
+      }
+    };
+    void tick();
+    const timer = window.setInterval(tick, 500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [seekKey, seekStart]);
 
   // Attach hls.js once segments are available.
   useEffect(() => {
@@ -449,26 +516,37 @@ export default function VideoPlayer({ item }: { item: Item }) {
       (mode === "hls" ? hlsStart + video.duration : video.duration) ||
       0;
     const target = Math.min(Math.max(0, value), total);
+    const wasPlaying = !video.paused;
+    if (!scrubbing) resumeAfterSeek.current = wasPlaying;
 
     if (mode === "hls") {
       const local = target - hlsStart;
       const available = Number.isFinite(video.duration) ? video.duration : 0;
       if (!available || local < -0.5 || local > available + 0.5) {
-        // Start a new transcode near the target instead of waiting for the
-        // sequentially transcoded stream to reach it.
+        // Keep the current frame and controls visible while the server
+        // prepares the requested section.
         const start = Math.max(0, Math.floor(target - 2));
+        video.pause();
         setCurrent(target);
         setWaiting(true);
-        void prepareHls(start);
+        void beginHlsSeek(start);
         return;
       }
       video.currentTime = Math.min(Math.max(0, local), available);
       setCurrent(target);
+      if (resumeAfterSeek.current) {
+        resumeAfterSeek.current = false;
+        void video.play().catch(() => {});
+      }
       return;
     }
 
     video.currentTime = Math.min(target, video.duration || target);
     setCurrent(video.currentTime);
+    if (resumeAfterSeek.current) {
+      resumeAfterSeek.current = false;
+      void video.play().catch(() => {});
+    }
   }
 
   function seekBy(delta: number) {
@@ -572,7 +650,8 @@ export default function VideoPlayer({ item }: { item: Item }) {
   }
 
   const totalDuration = Math.max(duration, sourceDuration);
-  const progress = totalDuration > 0 ? Math.min(100, (current / totalDuration) * 100) : 0;
+  const shownCurrent = scrubbing ? scrubValue : current;
+  const progress = totalDuration > 0 ? Math.min(100, (shownCurrent / totalDuration) * 100) : 0;
   const bufferedPct = totalDuration > 0 ? Math.min(100, (buffered / totalDuration) * 100) : 0;
 
   return (
@@ -624,8 +703,18 @@ export default function VideoPlayer({ item }: { item: Item }) {
           saveProgress();
         }}
         onWaiting={() => setWaiting(true)}
-        onCanPlay={() => setWaiting(false)}
-        onPlaying={() => setWaiting(false)}
+        onCanPlay={() => {
+          if (seekKey) return;
+          setWaiting(false);
+          if (resumeAfterSeek.current) {
+            resumeAfterSeek.current = false;
+            void videoRef.current?.play().catch(() => {});
+          }
+        }}
+        onPlaying={() => {
+          setWaiting(false);
+          resumeAfterSeek.current = false;
+        }}
         onError={() => {
           if (mode === "direct" && !forceHls) setForceHls(true);
         }}
@@ -659,7 +748,7 @@ export default function VideoPlayer({ item }: { item: Item }) {
             min={0}
             max={totalDuration || 0}
             step={0.1}
-            value={Math.min(current, totalDuration || 0)}
+            value={Math.min(shownCurrent, totalDuration || 0)}
             aria-label="Seek"
             style={
               {
@@ -667,7 +756,32 @@ export default function VideoPlayer({ item }: { item: Item }) {
                 "--buffered": `${bufferedPct}%`,
               } as React.CSSProperties
             }
-            onChange={(event) => seekTo(Number(event.target.value))}
+            onPointerDown={() => {
+              const video = videoRef.current;
+              scrubbingRef.current = true;
+              setScrubbing(true);
+              setScrubValue(current);
+              resumeAfterSeek.current = Boolean(video && !video.paused);
+              video?.pause();
+              holdControls();
+            }}
+            onChange={(event) => {
+              const next = Number(event.target.value);
+              if (scrubbingRef.current) setScrubValue(next);
+              else seekTo(next);
+            }}
+            onPointerUp={(event) => {
+              const next = Number(event.currentTarget.value);
+              scrubbingRef.current = false;
+              setScrubbing(false);
+              seekTo(next);
+              showControls();
+            }}
+            onPointerCancel={() => {
+              scrubbingRef.current = false;
+              setScrubbing(false);
+              setScrubValue(current);
+            }}
           />
         </div>
 
@@ -682,7 +796,7 @@ export default function VideoPlayer({ item }: { item: Item }) {
             <SkipForwardIcon />
           </button>
           <span className="vp-time">
-            {formatTime(current)} <span>/</span> {formatTime(totalDuration)}
+            {formatTime(shownCurrent)} <span>/</span> {formatTime(totalDuration)}
           </span>
 
           <div className="vp-grow" />
