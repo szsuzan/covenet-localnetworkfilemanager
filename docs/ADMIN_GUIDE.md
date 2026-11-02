@@ -121,7 +121,8 @@ https://127.0.0.1:3000
 ```
 
 Starting the hotspot disconnects the laptop from its current Wi-Fi, so open the
-admin page first.
+admin page at `https://127.0.0.1:3000/admin` first. Start is disabled on
+non-local addresses; the request would be cut off when Wi-Fi changes.
 
 1. Choose an SSID and password.
 2. Click **Start hotspot**.

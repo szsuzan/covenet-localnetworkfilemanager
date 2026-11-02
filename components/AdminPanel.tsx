@@ -61,6 +61,7 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
   const [hotspotError, setHotspotError] = useState("");
   const [hotspotSsid, setHotspotSsid] = useState("Cove");
   const [hotspotPassword, setHotspotPassword] = useState("");
+  const [localAdmin, setLocalAdmin] = useState(false);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -97,6 +98,12 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
   }
 
   async function hotspotAction(action: "start" | "stop") {
+    if (action === "start" && !localAdmin) {
+      setHotspotError(
+        "Open https://127.0.0.1:3000/admin on the laptop before starting; starting over Wi-Fi disconnects this page.",
+      );
+      return;
+    }
     setHotspotBusy(true);
     setHotspotError("");
     try {
@@ -160,6 +167,9 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
   }
 
   useEffect(() => {
+    setLocalAdmin(
+      ["127.0.0.1", "localhost", "::1", "[::1]"].includes(window.location.hostname),
+    );
     void refresh();
     void loadStats();
     void loadHotspot();
@@ -387,16 +397,31 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
                   <button
                     className="btn primary"
                     type="submit"
-                    disabled={hotspotBusy}
+                    disabled={hotspotBusy || !localAdmin}
+                    title={
+                      localAdmin
+                        ? undefined
+                        : "Open the admin page on the laptop at https://127.0.0.1:3000"
+                    }
                   >
                     {hotspotBusy ? "Starting…" : "Start hotspot"}
                   </button>
                 </form>
-                <p className="form-hint">
-                  Starting the hotspot disconnects the laptop from its current
-                  Wi-Fi. Open this page at{" "}
-                  <code>https://127.0.0.1:3000</code> on the laptop to control it.
-                </p>
+                {localAdmin ? (
+                  <p className="form-hint">
+                    Starting the hotspot disconnects the laptop from its current
+                    Wi-Fi. Reconnect phones to the Cove hotspot after it starts.
+                  </p>
+                ) : (
+                  <p className="form-hint">
+                    This page is not open on the laptop’s localhost. Open{" "}
+                    <a href="https://127.0.0.1:3000/admin">
+                      https://127.0.0.1:3000/admin
+                    </a>{" "}
+                    on the laptop before starting; starting over Wi-Fi disconnects
+                    this page.
+                  </p>
+                )}
               </>
             )}
 

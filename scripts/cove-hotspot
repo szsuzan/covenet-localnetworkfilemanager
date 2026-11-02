@@ -48,6 +48,11 @@ case "$ACTION" in
       exit 2
     fi
 
+    if nmcli -t -f NAME connection show --active 2>/dev/null | grep -qx "$CON"; then
+      echo "Hotspot already running"
+      exit 0
+    fi
+
     nmcli connection delete "$CON" >/dev/null 2>&1 || true
     nmcli device wifi hotspot ifname "$IFACE" con-name "$CON" ssid "$SSID" password "$PASS"
 

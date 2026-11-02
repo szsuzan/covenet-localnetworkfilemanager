@@ -100,7 +100,8 @@ Then in **Admin → Offline hotspot**:
 
 Starting it disconnects the laptop from its current Wi-Fi, so open the admin
 page on the laptop at `https://127.0.0.1:3000` first (the certificate includes
-`127.0.0.1`).
+`127.0.0.1`). The Start button is disabled on non-local addresses because the
+request would be cut off when Wi-Fi changes.
 
 No internet is needed — the hotspot is just a local network. Phones may warn
 “no internet” or try to switch to mobile data; keep them connected. The QR URL

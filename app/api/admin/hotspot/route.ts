@@ -181,6 +181,10 @@ export async function POST(req: NextRequest) {
     }
     if (!fs.existsSync(HELPER)) return fail("Hotspot helper is not installed", 409);
 
+    // A second start request used to delete and recreate the active AP.
+    const alreadyRunning = await status();
+    if (alreadyRunning.running) return NextResponse.json(alreadyRunning);
+
     try {
       await run("sudo", ["-n", HELPER, "start", ssid, password]);
       fs.mkdirSync(path.dirname(SAVED), { recursive: true });
