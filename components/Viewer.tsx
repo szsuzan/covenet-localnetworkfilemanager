@@ -52,6 +52,10 @@ export default function Viewer({
   const next = index >= 0 && index < siblings.length - 1 ? siblings[index + 1] : null;
   const stream = `/api/stream?path=${encodeURIComponent(current.path)}`;
   const download = `${stream}&download=1`;
+  const needsPreview = /\.(heic|heif|tiff?)$/i.test(current.name);
+  const imageSrc = needsPreview
+    ? `/api/preview?path=${encodeURIComponent(current.path)}&v=${current.mtime}`
+    : stream;
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -82,7 +86,7 @@ export default function Viewer({
 
       <div className="viewer-stage">
         {current.kind === "image" ? (
-          <img src={stream} alt={current.name} />
+          <img src={imageSrc} alt={current.name} />
         ) : current.kind === "video" ? (
           <VideoPlayer key={current.path} item={current} />
         ) : current.kind === "audio" ? (

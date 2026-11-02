@@ -12,6 +12,25 @@ import { relPath, resolveUserPath, THUMB_ROOT } from "@/lib/paths";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function magickThumb(input: string, output: string) {
+  return new Promise<void>((resolve, reject) => {
+    execFile(
+      "magick",
+      [
+        input,
+        "-auto-orient",
+        "-thumbnail", "480x360^",
+        "-gravity", "center",
+        "-extent", "480x360",
+        "-quality", "82",
+        output,
+      ],
+      { timeout: 30_000 },
+      (error) => (error ? reject(error) : resolve()),
+    );
+  });
+}
+
 function ffmpegThumb(input: string, output: string) {
   return new Promise<void>((resolve, reject) => {
     execFile(
@@ -58,7 +77,7 @@ export async function GET(req: NextRequest) {
 
   const key = crypto
     .createHash("sha1")
-    .update(`${relPath(abs)}|${stat.size}|${stat.mtimeMs}|v2`)
+    .update(`${relPath(abs)}|${stat.size}|${stat.mtimeMs}|v3`)
     .digest("hex");
   const cached = path.join(THUMB_ROOT, `${key}.jpg`);
 
@@ -69,13 +88,23 @@ export async function GET(req: NextRequest) {
         const temp = `${cached}.${process.pid}.${Math.random().toString(36).slice(2, 8)}.tmp.jpg`;
         try {
           if (kind === "image") {
-            await imageThumbLimit(() =>
-              sharp(abs, { failOn: "none" })
-                .rotate()
-                .resize(480, 360, { fit: "cover", position: "centre" })
-                .jpeg({ quality: 80, mozjpeg: true })
-                .toFile(temp),
-            );
+            const ext = path.extname(abs).toLowerCase();
+            const magickFirst = [".heic", ".heif", ".tif", ".tiff"].includes(ext);
+            await imageThumbLimit(async () => {
+              if (magickFirst) {
+                await magickThumb(abs, temp);
+                return;
+              }
+              try {
+                await sharp(abs, { failOn: "none" })
+                  .rotate()
+                  .resize(480, 360, { fit: "cover", position: "centre" })
+                  .jpeg({ quality: 80, mozjpeg: true })
+                  .toFile(temp);
+              } catch {
+                await magickThumb(abs, temp);
+              }
+            });
           } else {
             await videoThumbLimit(async () => {
               await ffmpegThumb(abs, temp);

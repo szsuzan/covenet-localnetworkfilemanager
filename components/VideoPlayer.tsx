@@ -36,6 +36,7 @@ export default function VideoPlayer({ item }: { item: Item }) {
   const settingsRef = useRef<HTMLDivElement>(null);
   const restored = useRef(false);
   const pendingSeek = useRef<number | null>(null);
+  const pendingPlay = useRef(false);
 
   const [mode, setMode] = useState<Mode>("probing");
   const [error, setError] = useState("");
@@ -46,6 +47,7 @@ export default function VideoPlayer({ item }: { item: Item }) {
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [sourceDuration, setSourceDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
   const [volume, setVolume] = useState(1);
   const [muted, setMuted] = useState(false);
@@ -63,7 +65,14 @@ export default function VideoPlayer({ item }: { item: Item }) {
   const saveProgress = useCallback(
     (keepalive = false) => {
       const video = videoRef.current;
-      if (!video || !video.duration || !Number.isFinite(video.duration) || video.currentTime < 1) {
+      const total = sourceDuration || video?.duration || 0;
+      if (
+        !video ||
+        !total ||
+        !Number.isFinite(total) ||
+        video.currentTime < 1 ||
+        pendingSeek.current !== null
+      ) {
         return;
       }
       try {
@@ -77,12 +86,12 @@ export default function VideoPlayer({ item }: { item: Item }) {
         body: JSON.stringify({
           path: item.path,
           position: video.currentTime,
-          duration: video.duration,
+          duration: total,
         }),
         keepalive,
       }).catch(() => {});
     },
-    [item.path, positionKey],
+    [item.path, positionKey, sourceDuration],
   );
 
   const restorePosition = useCallback(async () => {
@@ -104,27 +113,37 @@ export default function VideoPlayer({ item }: { item: Item }) {
         saved = 0;
       }
     }
-    if (saved > 1 && Number.isFinite(video.duration)) {
+    const total = sourceDuration || video.duration;
+    if (saved > 1 && Number.isFinite(total) && total > 0) {
       // Ignore only the final ~10% so short clips still resume.
-      const endGuard = Math.min(10, video.duration * 0.1);
-      if (saved < video.duration - endGuard) {
-        video.currentTime = saved;
-        setCurrent(saved);
-      } else if (video.duration > saved + 5) {
-        // HLS duration grows while transcoding; seek once enough segments exist.
-        pendingSeek.current = saved;
+      const endGuard = Math.min(10, total * 0.1);
+      if (saved < total - endGuard) {
+        if (mode === "hls" && saved > video.duration - 0.5) {
+          // HLS duration grows while transcoding; seek once enough segments exist.
+          pendingSeek.current = saved;
+          pendingPlay.current = true;
+          setWaiting(true);
+        } else {
+          video.currentTime = saved;
+          setCurrent(saved);
+        }
       }
     }
-  }, [item.path, positionKey]);
+  }, [item.path, positionKey, sourceDuration, mode]);
 
   function resumePending() {
     const video = videoRef.current;
     const pending = pendingSeek.current;
     if (!video || pending == null) return;
-    if (Number.isFinite(video.duration) && video.duration > pending + 5) {
+    if (Number.isFinite(video.duration) && video.duration > pending + 0.5) {
+      pendingSeek.current = null;
       video.currentTime = pending;
       setCurrent(pending);
-      pendingSeek.current = null;
+      setWaiting(false);
+      if (pendingPlay.current) {
+        pendingPlay.current = false;
+        void video.play().catch(() => {});
+      }
     }
   }
 
@@ -166,7 +185,9 @@ export default function VideoPlayer({ item }: { item: Item }) {
     setElapsed(0);
     setCurrent(0);
     setDuration(0);
+    setSourceDuration(0);
     setWaiting(true);
+    pendingPlay.current = false;
 
     (async () => {
       try {
@@ -177,6 +198,10 @@ export default function VideoPlayer({ item }: { item: Item }) {
           setError(info?.error || "Could not read this video");
           setMode("error");
           return;
+        }
+        const probedDuration = Number(info.duration);
+        if (Number.isFinite(probedDuration) && probedDuration > 0) {
+          setSourceDuration(probedDuration);
         }
         if (info.directPlay && !forceHls) {
           setMode("direct");
@@ -294,6 +319,23 @@ export default function VideoPlayer({ item }: { item: Item }) {
     return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const target = video as unknown as {
+      addEventListener: (type: string, listener: () => void) => void;
+      removeEventListener: (type: string, listener: () => void) => void;
+    };
+    const begin = () => setFullscreen(true);
+    const end = () => setFullscreen(false);
+    target.addEventListener("webkitbeginfullscreen", begin);
+    target.addEventListener("webkitendfullscreen", end);
+    return () => {
+      target.removeEventListener("webkitbeginfullscreen", begin);
+      target.removeEventListener("webkitendfullscreen", end);
+    };
+  }, [mode]);
+
   // Keep controls visible while paused or a menu is open.
   useEffect(() => {
     if (!playing || settingsOpen) {
@@ -405,8 +447,22 @@ export default function VideoPlayer({ item }: { item: Item }) {
   function seekTo(value: number) {
     const video = videoRef.current;
     if (!video) return;
+    const total = Math.max(duration, sourceDuration) || video.duration || 0;
+    const target = Math.min(Math.max(0, value), total);
+
+    if (mode === "hls" && target > video.duration + 0.5) {
+      // Not transcoded that far yet: pause and jump when the segment exists.
+      pendingSeek.current = target;
+      pendingPlay.current = !video.paused;
+      video.pause();
+      setCurrent(target);
+      setWaiting(true);
+      return;
+    }
+
     pendingSeek.current = null;
-    video.currentTime = Math.min(Math.max(0, value), video.duration || 0);
+    pendingPlay.current = false;
+    video.currentTime = Math.min(target, video.duration || target);
     setCurrent(video.currentTime);
   }
 
@@ -436,12 +492,21 @@ export default function VideoPlayer({ item }: { item: Item }) {
 
   async function toggleFullscreen() {
     const shell = shellRef.current;
+    const video = videoRef.current as
+      | (HTMLVideoElement & { webkitEnterFullscreen?: () => void })
+      | null;
     if (!shell) return;
     try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await shell.requestFullscreen();
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (document.fullscreenEnabled) {
+        await shell.requestFullscreen();
+      } else {
+        // iOS Safari only supports native video fullscreen.
+        video?.webkitEnterFullscreen?.();
+      }
     } catch {
-      /* ignore */
+      video?.webkitEnterFullscreen?.();
     }
     showControls();
   }
@@ -498,8 +563,9 @@ export default function VideoPlayer({ item }: { item: Item }) {
     );
   }
 
-  const progress = duration > 0 ? Math.min(100, (current / duration) * 100) : 0;
-  const bufferedPct = duration > 0 ? Math.min(100, (buffered / duration) * 100) : 0;
+  const totalDuration = Math.max(duration, sourceDuration);
+  const progress = totalDuration > 0 ? Math.min(100, (current / totalDuration) * 100) : 0;
+  const bufferedPct = totalDuration > 0 ? Math.min(100, (buffered / totalDuration) * 100) : 0;
 
   return (
     <div
@@ -573,9 +639,9 @@ export default function VideoPlayer({ item }: { item: Item }) {
             className="vp-seek"
             type="range"
             min={0}
-            max={duration || 0}
+            max={totalDuration || 0}
             step={0.1}
-            value={Math.min(current, duration || 0)}
+            value={Math.min(current, totalDuration || 0)}
             aria-label="Seek"
             style={
               {
@@ -598,7 +664,7 @@ export default function VideoPlayer({ item }: { item: Item }) {
             <SkipForwardIcon />
           </button>
           <span className="vp-time">
-            {formatTime(current)} <span>/</span> {formatTime(duration)}
+            {formatTime(current)} <span>/</span> {formatTime(totalDuration)}
           </span>
 
           <div className="vp-grow" />

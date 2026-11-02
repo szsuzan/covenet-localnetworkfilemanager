@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { HLS_ROOT, THUMB_ROOT, UPLOAD_ROOT } from "./paths";
+import { HLS_ROOT, PREVIEW_ROOT, THUMB_ROOT, UPLOAD_ROOT } from "./paths";
 import { purgeExpiredTrash } from "./trash";
 import { pathSize } from "./usage";
 
@@ -169,8 +169,10 @@ export async function runCleanup(): Promise<CleanupResult> {
 
     const thumbAge = await pruneByAge(THUMB_ROOT, cfg.thumbDays * DAY);
     const thumbSize = await pruneBySize(THUMB_ROOT, cfg.thumbMaxBytes, false);
-    result.thumbs = thumbAge.removed + thumbSize.removed;
-    result.freedBytes += thumbAge.freed + thumbSize.freed;
+    const previewAge = await pruneByAge(PREVIEW_ROOT, cfg.thumbDays * DAY);
+    const previewSize = await pruneBySize(PREVIEW_ROOT, cfg.thumbMaxBytes, false);
+    result.thumbs = thumbAge.removed + thumbSize.removed + previewAge.removed + previewSize.removed;
+    result.freedBytes += thumbAge.freed + thumbSize.freed + previewAge.freed + previewSize.freed;
 
     console.log(
       `[cleanup] uploads=${result.uploads} trash=${result.trash} hls=${result.hls} thumbs=${result.thumbs} freed=${(result.freedBytes / 1024 / 1024).toFixed(1)}MB`,

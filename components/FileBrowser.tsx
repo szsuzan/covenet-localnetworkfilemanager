@@ -274,6 +274,27 @@ export default function FileBrowser({
     return () => document.removeEventListener("mousedown", onClick);
   }, [menuOpen]);
 
+  useEffect(() => {
+    const onPop = () => {
+      const params = new URLSearchParams(window.location.search);
+      const nextPath = params.get("path") || "";
+      const view = params.get("view");
+      const nextMode: Mode =
+        view === "recent" ? "recent" : view === "favorites" ? "favorites" : "files";
+      setMode(nextMode);
+      setPath(nextPath);
+      setQuery(params.get("q") || "");
+      setSearchResults(null);
+      setViewer(null);
+      setSelected(new Set());
+      setClipboard([]);
+      setVisibleCount(PAGE_SIZE);
+      setError("");
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   const sorted = [...items].sort((a, b) => {
     if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
     if (sort === "date") return b.mtime - a.mtime;
@@ -296,7 +317,8 @@ export default function FileBrowser({
           ? `/files?path=${encodeURIComponent(target)}`
           : "/files"
         : `/files?view=${nextMode}`;
-    window.history.replaceState(null, "", url);
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (current !== url) window.history.pushState(null, "", url);
   }
 
   function navigate(target: string) {

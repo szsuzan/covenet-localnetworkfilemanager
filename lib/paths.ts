@@ -10,6 +10,7 @@ export const DATA_ROOT = path.join(process.cwd(), "data");
 export const TRASH_ROOT = path.join(DATA_ROOT, "trash");
 export const UPLOAD_ROOT = path.join(DATA_ROOT, "uploads");
 export const THUMB_ROOT = path.join(DATA_ROOT, "thumbs");
+export const PREVIEW_ROOT = path.join(DATA_ROOT, "previews");
 export const HLS_ROOT = path.join(DATA_ROOT, "hls");
 
 export const PUBLIC_ROOT = path.join(STORAGE_ROOT, "Public");
@@ -23,6 +24,7 @@ for (const dir of [
   TRASH_ROOT,
   UPLOAD_ROOT,
   THUMB_ROOT,
+  PREVIEW_ROOT,
   HLS_ROOT,
 ]) {
   fs.mkdirSync(dir, { recursive: true });
