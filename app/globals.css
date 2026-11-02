@@ -2780,19 +2780,34 @@ html[data-theme="light"] .home-art-tile {
 
 /* ---------- custom video player ---------- */
 .vp {
+  --video-aspect: 1.7777778;
   position: relative;
-  width: min(1200px, 100%);
+  width: min(
+    1200px,
+    calc((100vh - 150px) * var(--video-aspect)),
+    100%
+  );
+  width: min(
+    1200px,
+    calc((100dvh - 150px) * var(--video-aspect)),
+    100%
+  );
+  max-height: calc(100vh - 150px);
+  max-height: calc(100dvh - 150px);
+  aspect-ratio: var(--video-aspect);
   margin: 0 auto;
   overflow: hidden;
   border-radius: 12px;
   background: #000;
   outline: none;
+  container-type: inline-size;
 }
 
 .vp-video {
   display: block;
   width: 100%;
-  max-height: calc(100vh - 140px);
+  height: 100%;
+  max-height: 100%;
   object-fit: contain;
   background: #000;
   cursor: pointer;
@@ -3104,9 +3119,26 @@ html[data-theme="light"] .home-art-tile {
   line-height: 1.5;
 }
 
+@container (max-width: 440px) {
+  .vp-time,
+  .vp-volume {
+    display: none;
+  }
+
+  .vp-controls {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .vp-btn {
+    width: 28px;
+    height: 28px;
+  }
+}
+
 @media (max-width: 720px) {
   .vp-video {
-    max-height: calc(100vh - 190px);
+    max-height: 100%;
   }
 
   .vp-controls {

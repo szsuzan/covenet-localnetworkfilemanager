@@ -40,6 +40,7 @@ export default function VideoPlayer({ item }: { item: Item }) {
   const [error, setError] = useState("");
   const [key, setKey] = useState("");
   const [hlsStart, setHlsStart] = useState(0);
+  const [aspect, setAspect] = useState(16 / 9);
   const [forceHls, setForceHls] = useState(false);
 
   const [playing, setPlaying] = useState(false);
@@ -150,6 +151,7 @@ export default function VideoPlayer({ item }: { item: Item }) {
   // Probe once per file (or after a direct-play failure).
   useEffect(() => {
     setForceHls(false);
+    setAspect(16 / 9);
     restored.current = false;
   }, [item.path]);
 
@@ -553,7 +555,13 @@ export default function VideoPlayer({ item }: { item: Item }) {
 
   if (mode === "probing" || mode === "preparing") {
     return (
-      <div className="vp vp-loading" ref={shellRef} role="status" aria-label="Loading video">
+      <div
+        className="vp vp-loading"
+        ref={shellRef}
+        role="status"
+        aria-label="Loading video"
+        style={{ "--video-aspect": String(aspect) } as React.CSSProperties}
+      >
         <div
           className="vp-loading-poster"
           style={{ backgroundImage: `url(${poster})` }}
@@ -571,6 +579,7 @@ export default function VideoPlayer({ item }: { item: Item }) {
     <div
       ref={shellRef}
       className={`vp ${controlsVisible ? "" : "is-hidden"} ${fullscreen ? "is-fullscreen" : ""}`}
+      style={{ "--video-aspect": String(aspect) } as React.CSSProperties}
       tabIndex={0}
       onMouseMove={showControls}
       onMouseLeave={() => playing && !settingsOpen && setControlsVisible(false)}
@@ -587,7 +596,10 @@ export default function VideoPlayer({ item }: { item: Item }) {
         preload="auto"
         playsInline
         onClick={togglePlay}
-        onLoadedMetadata={() => {
+        onLoadedMetadata={(event) => {
+          const video = event.currentTarget;
+          const ratio = video.videoWidth / video.videoHeight;
+          if (Number.isFinite(ratio) && ratio > 0) setAspect(ratio);
           syncProgress();
           void restorePosition();
         }}
