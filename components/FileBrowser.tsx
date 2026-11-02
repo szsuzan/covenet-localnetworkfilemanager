@@ -7,6 +7,7 @@ import Viewer from "./Viewer";
 import { PromptDialog } from "./Dialogs";
 import ConfirmDialog from "./ConfirmDialog";
 import ThemeToggle from "./ThemeToggle";
+import PublicHome from "./PublicHome";
 import {
   CameraIcon,
   CloseIcon,
@@ -148,6 +149,7 @@ export default function FileBrowser({
   const [menuOpen, setMenuOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [toasts, setToasts] = useState<Array<{ id: number; text: string }>>([]);
+  const [homeRefresh, setHomeRefresh] = useState(0);
   const [confirm, setConfirm] = useState<{
     title: string;
     message: string;
@@ -196,8 +198,12 @@ export default function FileBrowser({
   }
 
   async function refreshCurrent() {
-    if (mode === "files") await load(pathRef.current, true);
-    else setRefreshKey((value) => value + 1);
+    if (mode === "files") {
+      await load(pathRef.current, true);
+      if (pathRef.current === "") setHomeRefresh((value) => value + 1);
+    } else {
+      setRefreshKey((value) => value + 1);
+    }
   }
 
   useEffect(() => {
@@ -279,6 +285,7 @@ export default function FileBrowser({
   const visible = displayed.slice(0, visibleCount);
   const crumbParts = path ? path.split("/") : [];
   const atRoot = path === "";
+  const homeView = mode === "files" && atRoot && !searchResults;
   const inPublic = path === "public" || path.startsWith("public/");
   const inPrivate = path === "private" || path.startsWith("private/");
 
@@ -420,10 +427,6 @@ export default function FileBrowser({
 
   function startUploads(entries: Dropped[]) {
     if (!user.canUpload || entries.length === 0) return;
-    if (!path) {
-      setError("Open Public or Private before uploading");
-      return;
-    }
     const created: Task[] = entries.map(({ file, dir }) => ({
       id: uploadIdFor(dir, file),
       file,
@@ -660,11 +663,8 @@ export default function FileBrowser({
     setDragging(false);
     setDragOverPath("");
     if (event.dataTransfer.types.includes("application/x-vault-item")) return;
-    if (!user.canUpload || atRoot) {
-      if (atRoot) setError("Open Public or Private before uploading");
-      return;
-    }
-    const entries = await collectDropped(event.dataTransfer, path);
+    if (!user.canUpload) return;
+    const entries = await collectDropped(event.dataTransfer, atRoot ? "public" : path);
     startUploads(entries);
   }
 
@@ -933,6 +933,7 @@ export default function FileBrowser({
               })}
               {inPublic ? <span className="pill">Public · everyone</span> : null}
               {inPrivate ? <span className="pill admin">Private · only you</span> : null}
+              {homeView ? <span className="pill">Public overview</span> : null}
             </div>
           ) : (
             <div className="crumbs">
@@ -942,7 +943,10 @@ export default function FileBrowser({
             </div>
           )}
 
-          <div className="toolbar-actions">
+          <div
+            className="toolbar-actions"
+            style={homeView ? { display: "none" } : undefined}
+          >
             {mode === "files" && clipboard.length > 0 ? (
               <button
                 className="btn small"
@@ -1038,7 +1042,8 @@ export default function FileBrowser({
           hidden
           onChange={(event) => {
             if (event.target.files) {
-              startUploads(Array.from(event.target.files).map((file) => ({ file, dir: path })));
+              const dir = path || "public";
+              startUploads(Array.from(event.target.files).map((file) => ({ file, dir })));
             }
             event.target.value = "";
           }}
@@ -1077,7 +1082,7 @@ export default function FileBrowser({
         />
 
         {error ? <div className="banner">{error}</div> : null}
-        {atRoot && mode === "files" && !searchResults ? (
+        {!homeView && atRoot && mode === "files" && !searchResults ? (
           <div className="muted" style={{ marginBottom: 12, fontSize: 13 }}>
             Public is visible to everyone. Private is visible only to you.
           </div>
@@ -1111,7 +1116,15 @@ export default function FileBrowser({
           </div>
         ) : null}
 
-        {loading || (mode !== "files" && specialLoading) ? (
+        {homeView ? (
+          <PublicHome
+            canUpload={user.canUpload}
+            refreshToken={homeRefresh}
+            onUpload={() => fileInput.current?.click()}
+            onNavigate={navigate}
+            onOpen={(item) => setViewer(item)}
+          />
+        ) : loading || (mode !== "files" && specialLoading) ? (
           <div className="skeleton-grid">
             {Array.from({ length: 12 }).map((_, index) => (
               <div className="skeleton" key={index} />
@@ -1439,7 +1452,7 @@ export default function FileBrowser({
             <UploadIcon width={34} height={34} />
             <div>
               {atRoot
-                ? "Open Public or Private before uploading"
+                ? "Drop files to upload to Public"
                 : `Drop files or folders to upload to ${
                     inPublic ? "Public" : "Private"
                   }${
