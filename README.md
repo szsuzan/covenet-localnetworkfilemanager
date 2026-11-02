@@ -103,6 +103,10 @@ page on the laptop at `https://127.0.0.1:3000` first (the certificate includes
 `127.0.0.1`). The Start button is disabled on non-local addresses because the
 request would be cut off when Wi-Fi changes.
 
+The laptop has one Wi-Fi radio, so **the laptop loses its normal Wi-Fi/internet
+while the hotspot is running**. The hotspot is local-only. If you need internet
+on the laptop too, use Ethernet or a second Wi-Fi adapter as the upstream.
+
 No internet is needed — the hotspot is just a local network. Phones may warn
 “no internet” or try to switch to mobile data; keep them connected. The QR URL
 is `https://10.42.0.1:3000`; on a new phone, bypass the certificate warning once

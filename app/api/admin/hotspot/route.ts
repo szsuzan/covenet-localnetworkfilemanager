@@ -224,15 +224,31 @@ export async function POST(req: NextRequest) {
   }
 
   if (body.action === "stop") {
+    const current = await status();
+    fs.rmSync(SAVED, { force: true });
+    audit(admin, "admin.hotspot.stop", null, req);
+
     try {
-      await run("sudo", ["-n", HELPER, "stop"]);
-      fs.rmSync(SAVED, { force: true });
-      audit(admin, "admin.hotspot.stop", null, req);
-    } catch (stopError) {
-      const message = stopError instanceof Error ? stopError.message : "Could not stop hotspot";
-      return fail(message, 409);
+      // Let this response leave before Wi-Fi reconnects.
+      const child = spawn(
+        "/bin/sh",
+        ["-c", 'sleep 1.5; exec sudo -n "$0" stop', HELPER],
+        { detached: true, stdio: "ignore" },
+      );
+      child.unref();
+    } catch {
+      return fail("Could not launch the hotspot helper", 500);
     }
-    return NextResponse.json(await status());
+
+    return NextResponse.json({
+      ...current,
+      running: false,
+      starting: false,
+      ip: "",
+      url: "",
+      wifiQr: null,
+      urlQr: null,
+    });
   }
 
   return fail("Unknown action");

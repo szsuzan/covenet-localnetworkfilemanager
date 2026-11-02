@@ -132,6 +132,10 @@ non-local addresses; the request would be cut off when Wi-Fi changes.
 The QR URL is `https://10.42.0.1:3000`. The certificate includes that address.
 Phones may warn that the hotspot has no internet; keep them connected.
 
+The laptop has one Wi-Fi radio, so it loses its normal Wi-Fi/internet while the
+hotspot runs. Use Ethernet or a second adapter if the laptop itself needs
+internet at the same time.
+
 Use **Stop hotspot** before reconnecting to normal Wi-Fi.
 
 ### If the hotspot IP is different

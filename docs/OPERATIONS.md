@@ -248,7 +248,8 @@ ss -ltnp | grep -E ':3000|:22'
 ### Hotspot
 
 The in-app hotspot is documented in the [Admin guide](ADMIN_GUIDE.md#offline-hotspot).
-The helper needs a one-time install:
+It uses the single Wi-Fi radio in AP mode, so the laptop loses its normal Wi-Fi
+and internet while the hotspot is active. The helper needs a one-time install:
 
 ```bash
 sudo ./scripts/install-hotspot.sh
