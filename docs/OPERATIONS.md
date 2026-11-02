@@ -180,7 +180,10 @@ hostname -I
 ### Tailscale
 
 ```bash
-./scripts/tailscale-setup.sh
+sudo tailscale up
+sudo tailscale set --operator="$USER"
+sudo ufw allow in on tailscale0 to any port 3000 proto tcp comment 'Cove Tailscale'
+sudo ufw allow in on tailscale0 to any port 3000 proto udp comment 'Cove Tailscale'
 tailscale status
 tailscale ip -4
 ```
@@ -191,29 +194,40 @@ device. Port 3000 is the only inbound port; no public funnel is needed.
 
 ### Firewall
 
-Apply the scoped rules with:
+Inspect the rules first. Remove any broad `22`, `3000`, `443` or `8443` rules
+by number, then apply the scoped rules:
 
 ```bash
-sudo ./scripts/firewall.sh
+LAN_IF=$(ip route get 1.1.1.1 | awk '{for (i=1;i<=NF;i++) if ($i=="dev") {print $(i+1); exit}}')
+LAN_CIDR=$(ip -4 route show dev "$LAN_IF" scope link | awk '$1 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\/[0-9]+$/ {print $1; exit}')
+HOTSPOT_CIDR=10.42.0.0/24
+
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+sudo ufw allow from "$LAN_CIDR" to any port 3000 proto tcp comment 'Cove LAN'
+sudo ufw allow from "$LAN_CIDR" to any port 3000 proto udp comment 'Cove LAN'
+sudo ufw allow from "$HOTSPOT_CIDR" to any port 3000 proto tcp comment 'Cove hotspot'
+sudo ufw allow from "$HOTSPOT_CIDR" to any port 3000 proto udp comment 'Cove hotspot'
+sudo ufw allow in on tailscale0 to any port 3000 proto tcp comment 'Cove Tailscale'
+sudo ufw allow in on tailscale0 to any port 3000 proto udp comment 'Cove Tailscale'
+
+sudo ufw allow from "$LAN_CIDR" to any port 22 proto tcp comment 'SSH LAN'
+sudo ufw allow in on tailscale0 to any port 22 proto tcp comment 'SSH Tailscale'
+
+sudo ufw allow from "$LAN_CIDR" to any port 5353 proto udp comment 'Cove mDNS'
+sudo ufw allow from "$HOTSPOT_CIDR" to any port 5353 proto udp comment 'Cove hotspot mDNS'
+sudo ufw allow in on "$LAN_IF" to any port 67 proto udp comment 'Cove hotspot DHCP'
+sudo ufw allow from "$HOTSPOT_CIDR" to any port 53 proto udp comment 'Cove hotspot DNS'
+sudo ufw allow from "$HOTSPOT_CIDR" to any port 53 proto tcp comment 'Cove hotspot DNS'
+
+sudo ufw enable
 ```
 
-The script detects the LAN interface/subnet, removes old broad rules for ports
-22, 443, 8443, 3000, 53, 67 and 5353, then allows only:
-
-| Port | Source |
-|---|---|
-| 3000 TCP/UDP | LAN, hotspot, `tailscale0` |
-| 22 TCP | LAN, `tailscale0` |
-| 5353 UDP | LAN and hotspot (mDNS) |
-| 67 UDP | Wi-Fi interface (hotspot DHCP) |
-| 53 UDP/TCP | hotspot subnet (DNS) |
-
-It keeps the default incoming policy at deny and does not open SSH on the
-hotspot. Run it again after a LAN subnet change. Override the hotspot subnet with
-`HOTSPOT_CIDR=…` if you changed it.
-
-UFW prints separate IPv4/IPv6 rules, and port 3000 has both TCP and UDP
-(HTTP/3), so several `3000` lines are expected. They are not duplicates.
+If the LAN has a global IPv6 prefix, repeat the `3000`, SSH and mDNS rules with
+that prefix. Do not open SSH on the hotspot. UFW prints separate IPv4/IPv6 rules,
+and port 3000 has both TCP and UDP (HTTP/3), so several `3000` lines are expected;
+they are not duplicates.
 
 Do not forward port 3000 from the internet. Confirm the result with:
 

@@ -56,14 +56,10 @@ traversal, upload path traversal, CSRF via Origin/Sec-Fetch-Site.
 
 ### High
 
-1. **SSH is exposed broadly.** `sshd` is active on `0.0.0.0:22`, UFW allows 22
-   from anywhere, and password authentication is enabled. Use keys, disable
-   password login, and apply the scoped firewall:
-   ```bash
-   sudo ./scripts/firewall.sh
-   ```
-   The script allows 22 only from the LAN and `tailscale0`; do this only after
-   confirming key login works.
+1. **SSH is still password-authenticated.** UFW now allows 22 only from the LAN
+   and `tailscale0`; use SSH keys and disable password login before exposing the
+   machine. The firewall commands are in
+   [Operations](docs/OPERATIONS.md#firewall).
 2. **The web app runs as the service user** with a NOPASSWD rule for the hotspot helper (and
    the existing Omarchy helper commands). A code-execution bug in Next.js,
    ffmpeg, ImageMagick or PDF.js handling could reach the user's home directory

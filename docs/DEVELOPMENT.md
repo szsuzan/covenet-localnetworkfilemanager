@@ -79,8 +79,7 @@ deploy/
   issue-cert.sh      static cert from Caddy's local CA
   systemd-user/      fileshare, cove-caddy, backup timer
 scripts/
-  deploy.sh, firewall.sh, backup.sh, hotspot.sh, install-hotspot.sh,
-  tailscale-setup.sh
+  deploy.sh, backup.sh, install-hotspot.sh, cove-hotspot
 ```
 
 ## Request flow

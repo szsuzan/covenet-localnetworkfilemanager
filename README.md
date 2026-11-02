@@ -22,8 +22,8 @@ Next.js 16 · SQLite · local filesystem · ffmpeg · sharp
 - Current LAN address: **https://LAN-IP:3000**
 - Port 3000 serves **HTTPS**; plain `http://` gets a `308` redirect to the same
   URL over HTTPS. UFW allows 3000 from `LAN-SUBNET`, `tailscale0` and the
-  hotspot subnet.
-- Apply or repair the firewall with `sudo ./scripts/firewall.sh`.
+  hotspot subnet. The manual UFW commands are in
+  [Operations](docs/OPERATIONS.md#firewall).
 
 ### First time on each device
 
@@ -58,7 +58,10 @@ Tailscale gives the machine a stable `100.x.y.z` address and a MagicDNS name tha
 work from any network, without exposing Cove to the internet.
 
 ```bash
-./scripts/tailscale-setup.sh      # logs in, allows the app on tailscale0
+sudo tailscale up
+sudo tailscale set --operator="$USER"
+sudo ufw allow in on tailscale0 to any port 3000 proto tcp comment 'Cove Tailscale'
+sudo ufw allow in on tailscale0 to any port 3000 proto udp comment 'Cove Tailscale'
 ```
 
 Use:
@@ -98,12 +101,6 @@ Then in **Admin → Offline hotspot**:
 Starting it disconnects the laptop from its current Wi-Fi, so open the admin
 page on the laptop at `https://127.0.0.1:3000` first (the certificate includes
 `127.0.0.1`).
-
-The CLI fallback is still available:
-
-```bash
-./scripts/hotspot.sh start
-```
 
 No internet is needed — the hotspot is just a local network. Phones may warn
 “no internet” or try to switch to mobile data; keep them connected. The QR URL
@@ -290,6 +287,5 @@ app/api/upload     chunked uploads
 components/        FileBrowser, Viewer, VideoPlayer, SecurityPanel, AdminPanel
 deploy/Caddyfile      TLS reverse proxy
 deploy/issue-cert.sh  refresh the CA-signed certificate (after IP changes)
-scripts/firewall.sh   scoped LAN/Tailscale/hotspot UFW rules
 scripts/backup.sh     hardlink snapshot backup
 ```

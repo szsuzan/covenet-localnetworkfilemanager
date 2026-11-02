@@ -133,13 +133,6 @@ Phones may warn that the hotspot has no internet; keep them connected.
 
 Use **Stop hotspot** before reconnecting to normal Wi-Fi.
 
-The CLI fallback is:
-
-```bash
-./scripts/hotspot.sh start
-./scripts/hotspot.sh stop
-```
-
 ### If the hotspot IP is different
 
 The helper normally uses `10.42.0.1`. If your configured subnet is different,
@@ -180,4 +173,4 @@ for real backups.
 - [ ] Do not expose port 3000 to the internet.
 - [ ] Keep the OS, Node, ffmpeg, ImageMagick and npm packages updated.
 - [ ] Verify backups can be restored, not only that they run.
-- [ ] Run `sudo ./scripts/firewall.sh` and use SSH key authentication; see [Security](../SECURITY.md).
+- [ ] Apply the UFW rules in [Operations](OPERATIONS.md#firewall) and use SSH key authentication; see [Security](../SECURITY.md).
