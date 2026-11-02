@@ -21,6 +21,14 @@ allow_ufw() {
   fi
 }
 
+allow_dhcp() {
+  command -v ufw >/dev/null 2>&1 || return 0
+  # The first DHCPDISCOVER comes from 0.0.0.0, so a source-subnet rule cannot match it.
+  if ! ufw status 2>/dev/null | grep -qE "67/udp on ${IFACE}.*ALLOW"; then
+    ufw allow in on "$IFACE" to any port 67 proto udp comment "Cove hotspot DHCP" >/dev/null || true
+  fi
+}
+
 case "$ACTION" in
   start)
     [ "$#" -eq 3 ] || usage
@@ -43,9 +51,9 @@ case "$ACTION" in
       SUBNET="${IP%.*}.0/24"
     fi
 
+    allow_dhcp
     allow_ufw 3000 tcp "Cove hotspot"
     allow_ufw 22 tcp "Cove hotspot SSH"
-    allow_ufw 67 udp "Cove hotspot DHCP"
     allow_ufw 53 udp "Cove hotspot DNS"
     allow_ufw 5353 udp "Cove hotspot mDNS"
     ;;

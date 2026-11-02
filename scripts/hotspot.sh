@@ -41,15 +41,18 @@ case "$ACTION" in
     fi
 
     echo "Starting hotspot '$SSID' on $IFACE (this disconnects the current Wi-Fi)…"
+    sudo nmcli connection delete "$CON" >/dev/null 2>&1 || true
     sudo nmcli device wifi hotspot ifname "$IFACE" con-name "$CON" ssid "$SSID" password "$PASS"
 
     IP="$(nmcli -g IP4.ADDRESS connection show "$CON" 2>/dev/null | head -1 | cut -d/ -f1 || true)"
     [ -z "${IP:-}" ] && IP="10.42.0.1"
     SUBNET="${IP%.*}.0/24"
 
+    if ! sudo ufw status 2>/dev/null | grep -qE "67/udp on ${IFACE}.*ALLOW"; then
+      sudo ufw allow in on "$IFACE" to any port 67 proto udp comment "Cove hotspot DHCP" >/dev/null
+    fi
     allow_ufw 3000 tcp "Cove hotspot"
     allow_ufw 22 tcp "Cove hotspot SSH"
-    allow_ufw 67 udp "Cove hotspot DHCP"
     allow_ufw 53 udp "Cove hotspot DNS"
     allow_ufw 5353 udp "Cove hotspot mDNS"
 
