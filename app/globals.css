@@ -1885,6 +1885,10 @@ html[data-theme="light"] .viewer {
     display: inline;
   }
 
+  .auth-brand span {
+    display: inline;
+  }
+
   .grid,
   .skeleton-grid {
     grid-template-columns: repeat(auto-fill, minmax(146px, 1fr));
