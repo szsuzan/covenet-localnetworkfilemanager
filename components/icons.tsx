@@ -183,6 +183,18 @@ export const FolderUpIcon = (p: Props) => (
     <path d="M12 16v-5m0 0-2 2m2-2 2 2" />
   </Svg>
 );
+export const HomeIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="m3 10 9-7 9 7" />
+    <path d="M5 9v11h14V9M10 20v-6h4v6" />
+  </Svg>
+);
+export const LockIcon = (p: Props) => (
+  <Svg {...p}>
+    <rect x="4" y="10" width="16" height="10" rx="2" />
+    <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+  </Svg>
+);
 export const SunIcon = (p: Props) => (
   <Svg {...p}>
     <circle cx="12" cy="12" r="4" />

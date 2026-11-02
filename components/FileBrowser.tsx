@@ -13,10 +13,13 @@ import {
   ClockIcon,
   DownloadIcon,
   EditIcon,
+  FolderIcon,
   FolderUpIcon,
   GridIcon,
+  HomeIcon,
   KindIcon,
   ListIcon,
+  LockIcon,
   LogoutIcon,
   PlusIcon,
   ScissorsIcon,
@@ -694,7 +697,7 @@ export default function FileBrowser({
       <>
         {!item.isDir ? (
           <button
-            className={`icon-btn ${favoritePaths.has(item.path) ? "active" : ""}`}
+            className={`icon-btn action-favorite ${favoritePaths.has(item.path) ? "active" : ""}`}
             title={favoritePaths.has(item.path) ? "Remove favorite" : "Favorite"}
             onClick={(event) => {
               event.stopPropagation();
@@ -734,7 +737,7 @@ export default function FileBrowser({
           <EditIcon />
         </button>
         <button
-          className="icon-btn"
+          className="icon-btn action-cut"
           title="Cut"
           onClick={(event) => {
             event.stopPropagation();
@@ -759,31 +762,100 @@ export default function FileBrowser({
 
   return (
     <div
+      className="app-shell"
       onDragEnter={onDragEnter}
       onDragOver={(event) => event.preventDefault()}
       onDragLeave={onDragLeave}
       onDrop={(event) => void onDrop(event)}
     >
-      <header className="topbar">
-        <a className="brand" href="/files">
+      <aside className="sidebar">
+        <a className="brand sidebar-brand" href="/files">
           <div className="brand-mark">C</div>
           <span>Cove</span>
         </a>
-        <nav className="nav-tabs">
-          <button className={mode === "files" ? "active" : ""} onClick={() => switchMode("files")}>
-            Files
-          </button>
-          <button className={mode === "recent" ? "active" : ""} onClick={() => switchMode("recent")}>
-            <ClockIcon width={15} height={15} /> Recent
+
+        <nav className="side-nav">
+          <div className="side-label">Library</div>
+          <button
+            className={`side-link ${mode === "files" && !inPublic && !inPrivate ? "active" : ""}`}
+            onClick={() => navigate("")}
+          >
+            <HomeIcon />
+            <span>Files</span>
           </button>
           <button
-            className={mode === "favorites" ? "active" : ""}
+            className={`side-link ${mode === "recent" ? "active" : ""}`}
+            onClick={() => switchMode("recent")}
+          >
+            <ClockIcon />
+            <span>Recent</span>
+          </button>
+          <button
+            className={`side-link ${mode === "favorites" ? "active" : ""}`}
             onClick={() => switchMode("favorites")}
           >
-            <StarIcon width={15} height={15} /> Favorites
+            <StarIcon />
+            <span>Favorites</span>
           </button>
+
+          <div className="side-label">Spaces</div>
+          <button
+            className={`side-link ${inPublic ? "active" : ""}`}
+            onClick={() => navigate("public")}
+          >
+            <FolderIcon />
+            <span>Public</span>
+          </button>
+          <button
+            className={`side-link ${inPrivate ? "active" : ""}`}
+            onClick={() => navigate("private")}
+          >
+            <LockIcon />
+            <span>Private</span>
+          </button>
+
+          <div className="side-label">Manage</div>
+          <a className="side-link" href="/trash">
+            <TrashIcon />
+            <span>Trash</span>
+          </a>
+          {user.role === "admin" ? (
+            <a className="side-link" href="/admin">
+              <UsersIcon />
+              <span>Admin</span>
+            </a>
+          ) : null}
+          <a className="side-link" href="/security">
+            <KeyIcon />
+            <span>Security</span>
+          </a>
         </nav>
-        <div className="search">
+
+        <div className="sidebar-foot">
+          <div className="side-user">
+            <span className="avatar">{user.username.slice(0, 1)}</span>
+            <div className="side-user-meta">
+              <strong>{user.username}</strong>
+              <span>{user.role === "admin" ? "Administrator" : "Member"}</span>
+            </div>
+            <button
+              className="icon-btn"
+              onClick={() => void signOut()}
+              title="Sign out"
+            >
+              <LogoutIcon />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <div className="app-main">
+        <header className="topbar">
+          <a className="brand mobile-brand" href="/files">
+            <div className="brand-mark">C</div>
+            <span>Cove</span>
+          </a>
+          <div className="search">
           <SearchIcon />
           <input
             ref={searchInput}
@@ -1204,6 +1276,35 @@ export default function FileBrowser({
           </div>
         ) : null}
       </main>
+      </div>
+
+      <nav className="mobile-nav" aria-label="Primary">
+        <button
+          className={mode === "files" ? "active" : ""}
+          onClick={() => navigate("")}
+        >
+          <HomeIcon />
+          <span>Files</span>
+        </button>
+        <button
+          className={mode === "recent" ? "active" : ""}
+          onClick={() => switchMode("recent")}
+        >
+          <ClockIcon />
+          <span>Recent</span>
+        </button>
+        <button
+          className={mode === "favorites" ? "active" : ""}
+          onClick={() => switchMode("favorites")}
+        >
+          <StarIcon />
+          <span>Favorites</span>
+        </button>
+        <a href="/trash">
+          <TrashIcon />
+          <span>Trash</span>
+        </a>
+      </nav>
 
       {tasks.length > 0 ? (
         <div className="uploads">
