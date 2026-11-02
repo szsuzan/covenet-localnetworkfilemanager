@@ -162,3 +162,9 @@ export function cancelTranscode(key: string): boolean {
   fs.rmSync(hlsDir(key), { recursive: true, force: true });
   return true;
 }
+
+export function cancelAllTranscodes() {
+  for (const key of new Set([...activeKeys, ...queuedKeys])) {
+    cancelTranscode(key);
+  }
+}

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { apiUser, fail, originOk } from "@/lib/api";
-import { runCleanup } from "@/lib/cleanup";
+import { clearCaches, runCleanup } from "@/lib/cleanup";
 import { emptyTrash } from "@/lib/trash";
 import { audit } from "@/lib/audit";
 
@@ -16,6 +16,10 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as { action?: string } | null;
   if (body?.action === "cleanup") {
     const result = await runCleanup();
+    const cache = await clearCaches();
+    result.hls += cache.hls;
+    result.thumbs += cache.thumbs + cache.previews;
+    result.freedBytes += cache.freedBytes;
     audit(user, "admin.cleanup", `freed ${result.freedBytes} bytes`, req);
     return NextResponse.json({ ok: true, result });
   }

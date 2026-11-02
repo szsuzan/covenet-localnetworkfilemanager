@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { HLS_ROOT, PREVIEW_ROOT, THUMB_ROOT, UPLOAD_ROOT } from "./paths";
+import { cancelAllTranscodes } from "./transcode";
 import { purgeExpiredTrash } from "./trash";
 import { pathSize } from "./usage";
 
@@ -138,6 +139,39 @@ async function pruneBySize(root: string, maxBytes: number, dirs: boolean) {
     removed += 1;
   }
   return { removed, freed };
+}
+
+async function clearCacheRoot(root: string) {
+  let removed = 0;
+  let freed = 0;
+  const entries = await fs.promises.readdir(root, { withFileTypes: true }).catch(() => []);
+
+  for (const entry of entries) {
+    if (entry.isSymbolicLink()) continue;
+    const full = path.join(root, entry.name);
+    const stat = await fs.promises.stat(full).catch(() => null);
+    if (!stat) continue;
+    freed += await entrySize(full, stat.isDirectory());
+    await fs.promises.rm(full, {
+      recursive: stat.isDirectory(),
+      force: true,
+    }).catch(() => {});
+    removed += 1;
+  }
+  return { removed, freed };
+}
+
+export async function clearCaches() {
+  cancelAllTranscodes();
+  const hls = await clearCacheRoot(HLS_ROOT);
+  const thumbs = await clearCacheRoot(THUMB_ROOT);
+  const previews = await clearCacheRoot(PREVIEW_ROOT);
+  return {
+    hls: hls.removed,
+    thumbs: thumbs.removed,
+    previews: previews.removed,
+    freedBytes: hls.freed + thumbs.freed + previews.freed,
+  };
 }
 
 let running = false;

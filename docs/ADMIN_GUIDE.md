@@ -141,14 +141,18 @@ and re-run it, or use `https://HOST.local:3000` when the client supports mDNS.
 
 ## Cleanup and retention
 
-Admins can trigger **Run cleanup**. The jobs remove:
+Admins can trigger **Run cleanup**. It removes:
 
 - stale incomplete uploads (`UPLOAD_STALE_HOURS`);
-- old Trash entries (`TRASH_RETENTION_DAYS`, default 30);
-- old/oversized HLS cache (`HLS_RETENTION_DAYS`, `HLS_MAX_GB`);
-- old/oversized thumbnails (`THUMB_RETENTION_DAYS`, `THUMB_MAX_GB`).
+- expired Trash entries (`TRASH_RETENTION_DAYS`, default 30);
+- **all HLS video cache**, including queued/running transcode work;
+- **all thumbnail and preview cache**.
 
-Changing these values requires editing `.env.local` and restarting the app.
+The scheduled cleanup (every 6 hours) still applies the age/size retention
+settings, but the admin **Run cleanup** button clears the media caches
+completely. Caches are rebuilt on demand.
+
+Changing retention values requires editing `.env.local` and restarting the app.
 
 ## Storage and backups
 

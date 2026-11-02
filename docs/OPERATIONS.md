@@ -318,7 +318,7 @@ Public and Private spaces, uploads, video playback and PDF preview.
 | Hotspot has no URL | Install the helper, check `dnsmasq`, and start it from the admin page |
 | Tailscale unreachable | `tailscale status`, UFW rule on `tailscale0`, install the CA on the client |
 | Video does not start | Check `journalctl --user -u fileshare` and ffmpeg availability |
-| Disk filling up | Admin → Run cleanup; inspect `data/hls`, `data/trash` and uploads |
+| Disk filling up | Admin → Run cleanup (also clears media caches); inspect `data/hls`, `data/trash` and uploads |
 
 Useful logs:
 

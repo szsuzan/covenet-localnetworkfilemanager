@@ -217,8 +217,9 @@ THUMB_MAX_GB=2
 CLEANUP_INTERVAL_HOURS=6
 ```
 
-Cleanup runs every 6 hours and on the first page load; admins can trigger it
-immediately with **Run cleanup**.
+Cleanup runs every 6 hours and on the first page load. Admins can trigger it
+immediately with **Run cleanup**; the admin action also clears the video,
+thumbnail and preview caches. The scheduled run only applies retention limits.
 
 ## Services
 

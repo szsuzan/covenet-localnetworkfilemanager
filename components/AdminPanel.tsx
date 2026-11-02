@@ -220,7 +220,12 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
           <span className="muted" style={{ fontSize: 12.5 }}>
             Signed in as {me.username}
           </span>
-          <button className="btn small" onClick={() => void runCleanup()} disabled={busy}>
+          <button
+            className="btn small"
+            onClick={() => void runCleanup()}
+            disabled={busy}
+            title="Remove expired files and clear video, thumbnail and preview caches"
+          >
             Run cleanup
           </button>
         </div>
