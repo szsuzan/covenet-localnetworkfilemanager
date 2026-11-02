@@ -10,21 +10,38 @@ Next.js 16 · SQLite · local filesystem · ffmpeg · sharp
 
 ## Access
 
-- **http://LAN-IP:3000**
-- Stable alternative: **http://HOST.local:3000** (mDNS — follows IP changes on the same LAN)
-- TLS is currently **disabled** at the owner's request. Credentials and session
-  cookies travel in plaintext on the LAN; keep this on a trusted network only.
-- Port 3000 is already allowed through UFW from `LAN-SUBNET`.
+- **https://HOST.local:3000** (mDNS — follows IP changes on the same LAN)
+- Current LAN address: **https://LAN-IP:3000**
+- Port 3000 serves **HTTPS**; plain `http://` gets a `308` redirect to the same
+  URL over HTTPS. UFW allows 3000 from `LAN-SUBNET`, `tailscale0` and the
+  hotspot subnet.
+
+### First time on each device
+
+Cove uses a local certificate authority (Caddy internal CA). On the first visit
+the browser will warn; continue to the login page and click **Install the Cove
+certificate** (`/cove-ca.crt`). Trust it as a root/CA, then reload. The
+certificate covers `HOST.local`, the current LAN IP, the hotspot IP
+`10.42.0.1`, the Tailscale IP and the MagicDNS name.
+
+After a LAN or Tailscale IP change, re-run:
+
+```bash
+./deploy/issue-cert.sh
+```
+
+It refreshes the certificate and CA download. It also restarts Caddy.
 
 ### Changing networks
 
 `HOST.local` is advertised by Avahi and points at whatever address the machine has,
 so it keeps working when DHCP hands out a new IP. It needs multicast/mDNS to be
 allowed on the network (most home/office Wi-Fi allows it; guest Wi-Fi and
-client-isolated networks often do not).
+client-isolated networks often do not). The stable URL is `HOST.local`; the IP is
+only a fallback.
 
-- On the router, reserve `LAN-IP` for this laptop’s MAC so clients
-  without mDNS keep working on this network.
+- If you reserve an address on the router, reserve the laptop’s **current**
+  address for its MAC. Re-run `./deploy/issue-cert.sh` if that address changes.
 
 ### Remote access with Tailscale (any network)
 
@@ -35,19 +52,14 @@ work from any network, without exposing Cove to the internet.
 ./scripts/tailscale-setup.sh      # logs in, allows the app on tailscale0
 ```
 
-Then either:
+Use:
 
-- **Direct (simplest):** `http://<tailscale-ip>:3000` or
-  `http://cove.<your-tailnet>.ts.net:3000`. Traffic is already encrypted by
-  WireGuard even though Cove itself speaks HTTP.
-- **HTTPS without a port (nicer):**
-  ```bash
-  tailscale serve --bg 3000
-  tailscale serve status
-  ```
-  This gives `https://cove.<your-tailnet>.ts.net` with a valid certificate.
-  Enable **MagicDNS** and **HTTPS Certificates** in the Tailscale admin console
-  first. It is tailnet-only — not public `funnel`.
+- `https://TAILSCALE-IP:3000` or
+- `https://HOST.TAILNET.ts.net:3000`
+
+Install the Cove CA on the remote device once (same `/cove-ca.crt` link).
+Traffic is encrypted by both WireGuard and Cove TLS. Port 3000 is the only
+inbound port.
 
 Get the name/IP with:
 
@@ -75,7 +87,8 @@ Then in **Admin → Offline hotspot**:
 3. Scan **1 · Join Wi-Fi**, then **2 · Open Cove**
 
 Starting it disconnects the laptop from its current Wi-Fi, so open the admin
-page on the laptop at `http://127.0.0.1:3000` first.
+page on the laptop at `https://127.0.0.1:3000` first (the certificate includes
+`127.0.0.1`).
 
 The CLI fallback is still available:
 
@@ -84,8 +97,10 @@ The CLI fallback is still available:
 ```
 
 No internet is needed — the hotspot is just a local network. Phones may warn
-“no internet” or try to switch to mobile data; keep them connected. `HOST.local`
-may also work if the client supports mDNS; the IP is the reliable option.
+“no internet” or try to switch to mobile data; keep them connected. The QR URL
+is `https://10.42.0.1:3000`; on a new phone, bypass the certificate warning once
+and install the Cove CA from the login page. `HOST.local` may also work if the
+client supports mDNS.
 
 **Option B — use your phone’s hotspot**
 
@@ -96,17 +111,20 @@ ip -4 addr show WIFI-INTERFACE          # find the laptop's hotspot IP/subnet
 sudo ufw allow from <subnet>/24 to any port 3000 proto tcp comment 'Cove hotspot'
 ```
 
-Open the laptop’s hotspot IP from the phone or any other device on that hotspot.
-Common subnets are `192.168.43.0/24` (Android) and `172.20.10.0/28` (iPhone).
+Open `https://<laptop-hotspot-ip>:3000` from the phone or any other device on
+that hotspot (trust the Cove CA once). Common subnets are `192.168.43.0/24`
+(Android) and `172.20.10.0/28` (iPhone); the generated certificate covers only
+the laptop’s own `10.42.0.1` hotspot, so re-run `./deploy/issue-cert.sh` if you
+use a different subnet.
 
 **Notes**
 
 - Tailscale needs internet; with no internet, use the hotspot IP instead.
 - With no network at all, Cove still works on the laptop itself at
-  `http://127.0.0.1:3000`.
+  `https://127.0.0.1:3000`.
 
-To re-enable TLS later, see [SECURITY.md](SECURITY.md). The HTTPS/Caddy units are
-installed but disabled.
+TLS is terminated by Caddy on port 3000; Next listens only on
+`127.0.0.1:3100`. See [SECURITY.md](SECURITY.md) for the certificate model.
 
 ## First login
 
@@ -136,8 +154,8 @@ See [SECURITY.md](SECURITY.md) for the threat model, and
 [SECURITY_AUDIT.md](SECURITY_AUDIT.md) for the latest audit, test matrix and
 remaining actions. Summary:
 
-- Plain HTTP on port 3000 (TLS temporarily disabled — see SECURITY.md)
-- Session cookie `HttpOnly`, `SameSite=Lax`; tokens stored hashed
+- HTTPS on port 3000 (Caddy internal CA); Next is loopback-only on `3100`
+- Session cookie `__Host-cove`, `Secure`, `HttpOnly`, `SameSite=Lax`; tokens stored hashed
 - 30-day absolute / 7-day idle sessions, max 10 per user, revoke-all
 - bcrypt (cost 12), password policy, forced change of the default password
 - Persisted login throttling (10 failures per account; 40 per IP as well when behind a trusted proxy)
@@ -176,8 +194,8 @@ The filesystem is the source of truth. Hidden entries and symlinks are never lis
 STORAGE_ROOT=/srv/cove/files
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=admin123
-COOKIE_SECURE=0          # 1 only when TLS is enabled
-TRUST_PROXY=0            # 1 only behind a proxy that overwrites X-Forwarded-For
+COOKIE_SECURE=1          # Secure __Host- cookie; requires HTTPS
+TRUST_PROXY=1            # Caddy overwrites X-Forwarded-For
 SESSION_IDLE_DAYS=7
 MAX_UPLOAD_GB=200
 
@@ -199,16 +217,17 @@ immediately with **Run cleanup**.
 
 ## Services
 
-The app currently runs as the **system** unit `/etc/systemd/system/fileshare.service`
-(`npm start`, port 3000, runs as `cove`, enabled at boot):
+The app runs as user-level units: `fileshare` (Next on `127.0.0.1:3100`) and
+`cove-caddy` (TLS on `0.0.0.0:3000`). Both are enabled at boot; linger is on for
+`cove`. The old system unit `/etc/systemd/system/fileshare.service` is disabled.
 
 ```bash
-systemctl status fileshare
-sudo systemctl restart fileshare     # after rebuilding
+systemctl --user status fileshare cove-caddy
+./scripts/deploy.sh                   # build + restart the app
+systemctl --user restart cove-caddy   # after changing the certificate
 ```
 
-The user-level TLS units (`cove-caddy`, `cove-mux`, user `fileshare`) are
-installed but disabled. The backup timer is user-level and active:
+The backup timer is also user-level and active:
 
 ```bash
 systemctl --user list-timers fileshare-backup.timer
@@ -237,13 +256,14 @@ off-site copies.
 ## Development
 
 ```bash
-npm run dev            # uses port 3000 on 0.0.0.0 (HTTP)
+npm run dev            # http://127.0.0.1:3101, HTTP dev only
 npm run typecheck
 npm run build
 ```
 
-For local HTTP dev, set `COOKIE_SECURE=0` in `.env.local` (otherwise the `Secure`
-cookie will not be sent).
+Port 3000 belongs to Caddy in production. For dev, set `COOKIE_SECURE=0` in
+`.env.local` (otherwise the `Secure` cookie is not sent over the HTTP dev
+server). `npm start` listens on `127.0.0.1:3100`.
 
 Key files:
 
@@ -260,6 +280,7 @@ lib/cleanup.ts     retention jobs
 app/api/stream     range streaming + inline-content hardening
 app/api/upload     chunked uploads
 components/        FileBrowser, Viewer, VideoPlayer, SecurityPanel, AdminPanel
-deploy/Caddyfile   TLS reverse proxy
-scripts/backup.sh  hardlink snapshot backup
+deploy/Caddyfile      TLS reverse proxy
+deploy/issue-cert.sh  refresh the CA-signed certificate (after IP changes)
+scripts/backup.sh     hardlink snapshot backup
 ```

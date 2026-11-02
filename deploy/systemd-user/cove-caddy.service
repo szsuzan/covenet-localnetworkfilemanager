@@ -1,7 +1,7 @@
 [Unit]
 Description=Cove TLS proxy
-After=network-online.target cove.service
-Wants=network-online.target
+After=network-online.target fileshare.service
+Wants=network-online.target fileshare.service
 
 [Service]
 Type=simple

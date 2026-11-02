@@ -1,9 +1,17 @@
 {
 	admin off
-	auto_https off
+	auto_https disable_redirects
+	skip_install_trust
+	servers {
+		listener_wrappers {
+			http_redirect
+			tls
+		}
+	}
 }
 
-http://LAN-IP:3000 {
+https://:3000 {
+	tls /home/cove/cove/data/caddy/cove.crt /home/cove/cove/data/caddy/cove.key
 	encode zstd gzip
 
 	header {

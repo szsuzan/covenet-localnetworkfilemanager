@@ -390,7 +390,7 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
                 <p className="form-hint">
                   Starting the hotspot disconnects the laptop from its current
                   Wi-Fi. Open this page at{" "}
-                  <code>http://127.0.0.1:3000</code> on the laptop to control it.
+                  <code>https://127.0.0.1:3000</code> on the laptop to control it.
                 </p>
               </>
             )}

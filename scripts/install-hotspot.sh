@@ -31,4 +31,4 @@ echo "  helper:   /usr/local/bin/cove-hotspot"
 echo "  sudoers:  /etc/sudoers.d/cove-hotspot"
 echo
 echo "Open Admin → Offline hotspot in Cove (preferably on the laptop at"
-echo "http://127.0.0.1:3000, because starting the hotspot disconnects Wi-Fi)."
+echo "https://127.0.0.1:3000, because starting the hotspot disconnects Wi-Fi)."

@@ -62,11 +62,11 @@ case "$ACTION" in
 Hotspot is running.
   SSID:      $SSID
   Password:  $PASS
-  Cove:      http://$IP:3000
-  mDNS:      http://$HOST.local:3000   (if the client supports mDNS)
+  Cove:      https://$IP:3000
+  mDNS:      https://$HOST.local:3000   (if the client supports mDNS)
 
-Connect the phone/laptop to that Wi-Fi. There is no internet, so phones may
-warn or try to switch to mobile data; keep them on the hotspot.
+Install the Cove CA from /cove-ca.crt once. There is no internet, so phones
+may warn or try to switch to mobile data; keep them on the hotspot.
 EOF
     ;;
 

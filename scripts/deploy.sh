@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Build and restart the live service. The restart is required: Next keeps the
-# old build's asset manifest in memory, so rebuilding alone leaves the browser
-# requesting chunks that no longer exist.
+# Build and restart the live app. Caddy keeps serving TLS on 3000.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 npm run build
-sudo systemctl restart fileshare
+systemctl --user restart fileshare.service
 sleep 1
-curl -s -o /dev/null -w "Cove is up: %{http_code}\n" http://127.0.0.1:3000/login
+curl -s --cacert public/cove-ca.crt -o /dev/null -w "Cove is up: %{http_code}\n" \
+  https://127.0.0.1:3000/login

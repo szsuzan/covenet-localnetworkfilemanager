@@ -8,8 +8,9 @@ archives, media processing, dependencies, system service, firewall and ports.
 
 | Issue | Severity | Fix |
 |---|---|---|
+| Plain HTTP on port 3000; session cookie not `Secure` | High | Caddy serves HTTPS on 3000 with a local-CA certificate; Next moved to loopback `3100`; `COOKIE_SECURE=1`, `TRUST_PROXY=1`; plain HTTP returns a 308 redirect to HTTPS |
 | Symlink inside a space could escape the storage root via a direct file URL | High | `resolveUserPath` now resolves the nearest real path and rejects anything outside the space (tested: `Public/leak.jpg → /etc/passwd` returns 400) |
-| Client IP came from spoofable `X-Forwarded-For`, weakening login throttling and poisoning audit logs | High | `TRUST_PROXY=0` by default; direct requests use `local`. Set `TRUST_PROXY=1` only behind a proxy that overwrites the header |
+| Client IP came from spoofable `X-Forwarded-For`, weakening login throttling and poisoning audit logs | High | Direct requests use `local`; production now sits behind Caddy with `TRUST_PROXY=1`, and Caddy overwrites `X-Forwarded-For` |
 | HEIC/TIFF thumbnails returned 404; iPhone photos did not preview | Medium | ImageMagick fallback for thumbnails + cached `/api/preview` JPEG conversion |
 | Browser back/forward did not work for folders/views | Medium | `pushState` + `popstate` navigation state |
 | Fullscreen button failed on some browsers | Medium | Fullscreen API with iOS `webkitEnterFullscreen` fallback |
@@ -36,8 +37,16 @@ traversal, upload path traversal, CSRF via Origin/Sec-Fetch-Site.
 - No `shell: true`, `execSync`, `spawnSync`, `eval`, or `new Function`.
 - `child_process` usage: `execFile`/`spawn` with argument arrays and absolute,
   path-validated inputs (ffmpeg, ffprobe, ImageMagick, the hotspot helper).
+- HTTPS on 3000 verifies with `public/cove-ca.crt` for `HOST.local`,
+  `LAN-IP`, `10.42.0.1`, `TAILSCALE-IP` and
+  `HOST.TAILNET.ts.net`; plain HTTP on 3000 returns `308` to the same URL over
+  HTTPS; nothing listens externally on `3100`.
+- Login over HTTPS sets `__Host-cove=…; Secure; HttpOnly; SameSite=lax`; the
+  authenticated `/api/auth` and `/files` requests succeed; the probe user was
+  removed afterwards.
 - HTTP security headers present (CSP, nosniff, SAMEORIGIN, no-referrer,
-  Permissions-Policy, COOP/CORP). HSTS is not active while TLS is disabled.
+  Permissions-Policy, COOP/CORP). HSTS is intentionally not enabled yet so
+  clients are not locked out before they install the local CA.
 - Photo viewer: HEIC preview 1800×2400, zoom, next, slideshow.
 - PDF viewer: 2-page PDF rendered via PDF.js, page navigation, zoom, fullscreen.
 - Video: direct MP4, MKV HLS, full duration, seek, speed, fullscreen, resume.
@@ -47,11 +56,7 @@ traversal, upload path traversal, CSRF via Origin/Sec-Fetch-Site.
 
 ### High
 
-1. **No TLS.** Cove is served over plain HTTP on port 3000; the session cookie is
-   not `Secure`. Anyone able to observe the LAN can read credentials/session
-   cookies. Re-enable TLS (Caddy internal CA), set `COOKIE_SECURE=1` and
-   `TRUST_PROXY=1` if a reverse proxy is used.
-2. **SSH is exposed broadly.** `sshd` is active on `0.0.0.0:22`, UFW allows 22
+1. **SSH is exposed broadly.** `sshd` is active on `0.0.0.0:22`, UFW allows 22
    from anywhere, and password authentication is enabled. Use keys, disable
    password login, and restrict UFW to the LAN and `tailscale0`:
    ```bash
@@ -62,26 +67,29 @@ traversal, upload path traversal, CSRF via Origin/Sec-Fetch-Site.
    sudo ufw allow in on tailscale0 to any port 22 proto tcp
    ```
    Do this only after confirming key login works.
-3. **The web app runs as `cove`** with a NOPASSWD rule for the hotspot helper (and
+2. **The web app runs as `cove`** with a NOPASSWD rule for the hotspot helper (and
    the existing Omarchy helper commands). A code-execution bug in Next.js,
-   ffmpeg, ImageMagick or PDF.js handling could reach the user's home directory.
-   It cannot gain root directly, but the blast radius is large. A dedicated
-   `cove` service user with access only to `FileShare` + `data` would be safer.
+   ffmpeg, ImageMagick or PDF.js handling could reach the user's home directory
+   and Caddy's CA keys. It cannot gain root directly, but the blast radius is
+   large. A dedicated `cove` service user with access only to `FileShare` +
+   `data` would be safer.
 
 ### Medium
 
-4. **No malware scanning.** Uploaded files are stored as-is. The app never executes
+3. **Local CA onboarding / no HSTS yet.** New clients see a warning until they
+   trust `public/cove-ca.crt`. HSTS is deliberately off until every client has
+   the CA, so a warning-bypass cannot lock anyone out of the site.
+4. **The TLS certificate is static.** It is valid for 397 days; re-run
+   `./deploy/issue-cert.sh` after an IP change and before expiry.
+5. **No malware scanning.** Uploaded files are stored as-is. The app never executes
    uploaded files, but ffmpeg/ffprobe/ImageMagick parse untrusted media as `cove`.
    Keep those packages updated; optionally scan uploads with ClamAV.
-5. **No per-user quota.** An authenticated user can fill the disk. There is a
+6. **No per-user quota.** An authenticated user can fill the disk. There is a
    per-file limit (`MAX_UPLOAD_GB`, default 200 GB) but no account quota.
-6. **Backups are on the same disk and unencrypted.** Point `BACKUP_DEST` at an
+7. **Backups are on the same disk and unencrypted.** Point `BACKUP_DEST` at an
    external/NAS mount and preferably use restic/borg for encryption.
-7. **CSP uses `'unsafe-inline'`** because Next.js injects inline bootstrap code.
+8. **CSP uses `'unsafe-inline'`** because Next.js injects inline bootstrap code.
    External scripts/objects are still blocked. A nonce-based CSP would be stronger.
-8. **Audit IPs are `local`** in direct-HTTP mode because the real socket address is
-   not available to route handlers and `X-Forwarded-For` is untrusted. Put the app
-   behind a trusted proxy and set `TRUST_PROXY=1`.
 9. **Private is application-level only.** Shell/root access to the machine can read
    `Private/<user>`, and admin password/2FA resets can access any account.
 10. **Password minimum was lowered to 8 characters** (requested). Three character
@@ -99,18 +107,18 @@ traversal, upload path traversal, CSRF via Origin/Sec-Fetch-Site.
 14. **The hotspot helper requires dnsmasq** and a one-time sudo setup. The DHCP
     interface rule (`67/udp on WIFI-INTERFACE`) was added and is present in UFW.
 
-## Deployment gap
+## Live state
 
-The live `fileshare.service` was started at **19:56**, while the current build is
-from **20:31**. Restart it to apply the security fixes and new viewers:
-
-```bash
-sudo systemctl restart fileshare
-```
-
-Then verify:
+As of 2026-11-02 21:15, the old system unit is disabled and the current build is
+running under the user-level units:
 
 ```bash
-systemctl status fileshare --no-pager
-curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/login
+systemctl --user status fileshare cove-caddy --no-pager
+ss -ltnp | grep -E ':3000|:3100'
+curl -s --cacert public/cove-ca.crt -o /dev/null -w '%{http_code}\n' \
+  https://LAN-IP:3000/login
 ```
+
+Caddy listens on `0.0.0.0:3000` (TLS); Next listens on `127.0.0.1:3100`.
+`COOKIE_SECURE=1` and `TRUST_PROXY=1`. The certificate SANs and CA are refreshed
+by `./deploy/issue-cert.sh`.

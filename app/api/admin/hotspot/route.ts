@@ -116,7 +116,7 @@ async function status(): Promise<HotspotStatus> {
 
   const password =
     running && saved && saved.ssid === ssid ? saved.password : running ? "" : saved?.password || "";
-  const url = ip ? `http://${ip}:3000` : "";
+  const url = ip ? `https://${ip}:3000` : "";
 
   let wifiQr: string | null = null;
   let urlQr: string | null = null;

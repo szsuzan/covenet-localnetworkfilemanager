@@ -52,6 +52,11 @@ export default async function LoginPage() {
           <LoginForm />
         </div>
         <p className="auth-foot">Cove · private file server</p>
+        <p className="auth-foot">
+          <a href="/cove-ca.crt" download>
+            Install the Cove certificate
+          </a>
+        </p>
       </section>
     </div>
   );
