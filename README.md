@@ -8,6 +8,14 @@ logging.
 Next.js 16 · SQLite · local filesystem · ffmpeg · sharp
 ```
 
+## Documentation
+
+- [User guide](docs/USER_GUIDE.md) — sign in, spaces, uploads, viewers, trash
+- [Admin guide](docs/ADMIN_GUIDE.md) — users, permissions, cleanup, hotspot
+- [Operations](docs/OPERATIONS.md) — install, services, certificates, backups, troubleshooting
+- [Development](docs/DEVELOPMENT.md) — code map, request flow, verification
+- [Security model](SECURITY.md) and [security audit](SECURITY_AUDIT.md)
+
 ## Access
 
 - **https://HOST.local:3000** (mDNS — follows IP changes on the same LAN)
@@ -128,10 +136,9 @@ TLS is terminated by Caddy on port 3000; Next listens only on
 
 ## First login
 
-The seeded admin account is `admin`. The original `admin123` password was flagged
-for mandatory change and has since been replaced — use the password you set.
-New passwords require at least 8 characters and 3 of: lowercase, uppercase,
-numbers, symbols.
+The initial admin account is `admin`. On a fresh database, sign in with the
+password from `ADMIN_PASSWORD` and change it when prompted. New passwords require
+at least 8 characters and 3 of: lowercase, uppercase, numbers, symbols.
 
 ## Features
 
@@ -169,7 +176,7 @@ remaining actions. Summary:
 
 ## Storage
 
-`STORAGE_ROOT` defaults to `/srv/cove/files`:
+`STORAGE_ROOT` is set in `.env.local`; the example below uses `/srv/cove/files`:
 
 ```
 Public/                 visible to every signed-in user
@@ -193,7 +200,7 @@ The filesystem is the source of truth. Hidden entries and symlinks are never lis
 ```ini
 STORAGE_ROOT=/srv/cove/files
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin123
+ADMIN_PASSWORD=change-me-before-first-start
 COOKIE_SECURE=1          # Secure __Host- cookie; requires HTTPS
 TRUST_PROXY=1            # Caddy overwrites X-Forwarded-For
 SESSION_IDLE_DAYS=7
@@ -219,7 +226,7 @@ immediately with **Run cleanup**.
 
 The app runs as user-level units: `fileshare` (Next on `127.0.0.1:3100`) and
 `cove-caddy` (TLS on `0.0.0.0:3000`). Both are enabled at boot; linger is on for
-`cove`. The old system unit `/etc/systemd/system/fileshare.service` is disabled.
+the service user. The old system unit `/etc/systemd/system/fileshare.service` is disabled.
 
 ```bash
 systemctl --user status fileshare cove-caddy

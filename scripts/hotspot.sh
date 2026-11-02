@@ -3,7 +3,12 @@
 # Usage: ./scripts/hotspot.sh start | stop | status
 set -euo pipefail
 
-IFACE="${HOTSPOT_IFACE:-WIFI-INTERFACE}"
+IFACE="${HOTSPOT_IFACE:-$(nmcli -t -f DEVICE,TYPE device status 2>/dev/null |
+  awk -F: '$2 == "wifi" { print $1; exit }')}"
+if [ -z "$IFACE" ]; then
+  echo "No Wi-Fi interface found; set HOTSPOT_IFACE." >&2
+  exit 1
+fi
 SSID="${HOTSPOT_SSID:-Cove}"
 CON="Cove-Hotspot"
 ACTION="${1:-start}"

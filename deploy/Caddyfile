@@ -11,7 +11,7 @@
 }
 
 https://:3000 {
-	tls /home/cove/cove/data/caddy/cove.crt /home/cove/cove/data/caddy/cove.key
+	tls data/caddy/cove.crt data/caddy/cove.key
 	encode zstd gzip
 
 	header {

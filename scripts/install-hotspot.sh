@@ -9,7 +9,11 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_USER="${SUDO_USER:-cove}"
+APP_USER="${SUDO_USER:-}"
+if [ -z "$APP_USER" ]; then
+  echo "Run this with sudo from the account that owns the Cove checkout." >&2
+  exit 1
+fi
 
 if ! command -v dnsmasq >/dev/null 2>&1; then
   echo "Installing dnsmasq (needed for DHCP/DNS on the hotspot)…"

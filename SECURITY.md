@@ -40,7 +40,7 @@ It is not a public-internet service.
 3. **Admin can reset passwords and 2FA**, and therefore can sign in as any user.
    This is inherent to a single-admin system; private folders are private from other
    *users*, not from the server operator.
-4. **The app runs as `cove`** with a NOPASSWD rule for the hotspot helper. A
+4. **The app runs as the service user** with a NOPASSWD rule for the hotspot helper. A
    code-execution bug in Next.js, ffmpeg, ImageMagick or PDF.js could reach the
    user's home directory and the CA key. It cannot gain root directly, but the
    blast radius is large; a dedicated `cove` user is still recommended.

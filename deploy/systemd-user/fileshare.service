@@ -5,10 +5,10 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/home/cove/cove
+WorkingDirectory=%h/cove
 Environment=NODE_ENV=production
-Environment=PATH=/home/cove/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin
-ExecStart=/usr/bin/env node /home/cove/cove/node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3100
+Environment=PATH=%h/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/env node %h/cove/node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3100
 Restart=always
 RestartSec=2
 

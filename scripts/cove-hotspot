@@ -4,8 +4,13 @@
 set -euo pipefail
 
 CON="Cove-Hotspot"
-IFACE="${COVE_HOTSPOT_IFACE:-WIFI-INTERFACE}"
+IFACE="${COVE_HOTSPOT_IFACE:-$(nmcli -t -f DEVICE,TYPE device status 2>/dev/null |
+  awk -F: '$2 == "wifi" { print $1; exit }')}"
 SUBNET="10.42.0.0/24"
+if [ -z "$IFACE" ]; then
+  echo "No Wi-Fi interface found; set COVE_HOTSPOT_IFACE." >&2
+  exit 2
+fi
 ACTION="${1:-}"
 
 usage() {

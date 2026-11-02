@@ -5,7 +5,8 @@ Wants=network-online.target fileshare.service
 
 [Service]
 Type=simple
-ExecStart=/home/cove/.local/bin/caddy run --config /home/cove/cove/deploy/Caddyfile --adapter caddyfile
+WorkingDirectory=%h/cove
+ExecStart=%h/.local/bin/caddy run --config deploy/Caddyfile --adapter caddyfile
 Restart=always
 RestartSec=2
 

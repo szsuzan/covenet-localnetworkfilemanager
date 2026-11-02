@@ -33,7 +33,7 @@ traversal, upload path traversal, CSRF via Origin/Sec-Fetch-Site.
 - Cross-site POST (`Origin: https://evil.example`): `403`.
 - SVG served as `Content-Disposition: attachment`, `application/octet-stream`, `nosniff`.
 - `npm audit --omit=dev`: **0 vulnerabilities**.
-- No private keys, GitHub tokens or cloud keys in tracked files.
+- No private keys, credentials, API keys, GitHub tokens or cloud keys in tracked files.
 - No `shell: true`, `execSync`, `spawnSync`, `eval`, or `new Function`.
 - `child_process` usage: `execFile`/`spawn` with argument arrays and absolute,
   path-validated inputs (ffmpeg, ffprobe, ImageMagick, the hotspot helper).
@@ -67,7 +67,7 @@ traversal, upload path traversal, CSRF via Origin/Sec-Fetch-Site.
    sudo ufw allow in on tailscale0 to any port 22 proto tcp
    ```
    Do this only after confirming key login works.
-2. **The web app runs as `cove`** with a NOPASSWD rule for the hotspot helper (and
+2. **The web app runs as the service user** with a NOPASSWD rule for the hotspot helper (and
    the existing Omarchy helper commands). A code-execution bug in Next.js,
    ffmpeg, ImageMagick or PDF.js handling could reach the user's home directory
    and Caddy's CA keys. It cannot gain root directly, but the blast radius is
@@ -82,7 +82,7 @@ traversal, upload path traversal, CSRF via Origin/Sec-Fetch-Site.
 4. **The TLS certificate is static.** It is valid for 397 days; re-run
    `./deploy/issue-cert.sh` after an IP change and before expiry.
 5. **No malware scanning.** Uploaded files are stored as-is. The app never executes
-   uploaded files, but ffmpeg/ffprobe/ImageMagick parse untrusted media as `cove`.
+   uploaded files, but ffmpeg/ffprobe/ImageMagick parse untrusted media as the service user.
    Keep those packages updated; optionally scan uploads with ClamAV.
 6. **No per-user quota.** An authenticated user can fill the disk. There is a
    per-file limit (`MAX_UPLOAD_GB`, default 200 GB) but no account quota.
@@ -116,7 +116,7 @@ running under the user-level units:
 systemctl --user status fileshare cove-caddy --no-pager
 ss -ltnp | grep -E ':3000|:3100'
 curl -s --cacert public/cove-ca.crt -o /dev/null -w '%{http_code}\n' \
-  https://LAN-IP:3000/login
+  https://127.0.0.1:3000/login
 ```
 
 Caddy listens on `0.0.0.0:3000` (TLS); Next listens on `127.0.0.1:3100`.
