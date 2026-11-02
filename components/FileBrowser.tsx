@@ -112,10 +112,12 @@ export default function FileBrowser({
   user,
   initialPath = "",
   initialView,
+  initialQuery = "",
 }: {
   user: SessionUser;
   initialPath?: string;
   initialView?: string;
+  initialQuery?: string;
 }) {
   const router = useRouter();
   const [path, setPath] = useState(initialPath);
@@ -130,7 +132,7 @@ export default function FileBrowser({
   const [error, setError] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [sort, setSort] = useState<"name" | "date" | "size">("name");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [searchResults, setSearchResults] = useState<Item[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [viewer, setViewer] = useState<Item | null>(null);

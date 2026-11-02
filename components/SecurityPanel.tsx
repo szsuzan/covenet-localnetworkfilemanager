@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SessionUser } from "./types";
 import { CloseIcon, LogoutIcon, StarIcon } from "./icons";
-import ThemeToggle from "./ThemeToggle";
+import PageShell from "./PageShell";
 
 type Setup = { secret: string; otpauth: string; qr: string };
 
@@ -136,26 +136,13 @@ export default function SecurityPanel({ user }: { user: SessionUser }) {
   }
 
   return (
-    <>
-      <header className="topbar">
-        <a className="brand" href="/files">
-          <div className="brand-mark">C</div>
-          <span>Cove</span>
-        </a>
-        <div className="grow" />
-        <a className="btn small" href="/files">
-          Back to files
-        </a>
-      </header>
+    <PageShell user={user} active="security">
+      <div className="page-head">
+        <h1>Account security</h1>
+        <span className="pill">{user.username}</span>
+      </div>
 
-      <main className="container" style={{ maxWidth: 760 }}>
-        <div className="page-head">
-          <h1>Account security</h1>
-          <span className="pill">{user.username}</span>
-          <span className="grow" />
-          <ThemeToggle />
-        </div>
-
+      <div className="narrow">
         {user.mustChangePassword ? (
           <div className="banner" style={{ borderColor: "rgba(255,180,84,.35)", background: "rgba(255,180,84,.08)", color: "var(--warn)" }}>
             You must change the default password before using the file manager.
@@ -350,7 +337,7 @@ export default function SecurityPanel({ user }: { user: SessionUser }) {
             </div>
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </PageShell>
   );
 }

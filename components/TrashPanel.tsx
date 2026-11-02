@@ -5,7 +5,7 @@ import type { SessionUser } from "./types";
 import { KindIcon, TrashIcon } from "./icons";
 import { formatBytes, formatDate } from "./format";
 import ConfirmDialog from "./ConfirmDialog";
-import ThemeToggle from "./ThemeToggle";
+import PageShell from "./PageShell";
 
 type Entry = {
   id: string;
@@ -102,33 +102,24 @@ export default function TrashPanel({ user }: { user: SessionUser }) {
   }
 
   return (
-    <>
-      <header className="topbar">
-        <a className="brand" href="/files">
-          <div className="brand-mark">C</div>
-          <span>Cove</span>
-        </a>
-        <div className="grow" />
-        <ThemeToggle />
-        <a className="btn small" href="/files">
-          Back to files
-        </a>
+    <PageShell user={user} active="trash">
+      <div className="page-head">
+        <h1>Trash</h1>
+        <span className="pill">{items.length} item(s)</span>
+        <span className="grow" />
+        <span className="muted" style={{ fontSize: 12.5 }}>
+          Deleted items are removed automatically after 30 days.
+        </span>
         {user.role === "admin" ? (
-          <button className="btn small danger" disabled={busy || items.length === 0} onClick={emptyAll}>
+          <button
+            className="btn small danger"
+            disabled={busy || items.length === 0}
+            onClick={emptyAll}
+          >
             Empty trash
           </button>
         ) : null}
-      </header>
-
-      <main className="container">
-        <div className="page-head">
-          <h1>Trash</h1>
-          <span className="pill">{items.length} item(s)</span>
-          <span className="grow" />
-          <span className="muted" style={{ fontSize: 12.5 }}>
-            Deleted items are removed automatically after 30 days.
-          </span>
-        </div>
+      </div>
 
         {error ? <div className="banner">{error}</div> : null}
         {notice ? <div className="banner" style={{ borderColor: "rgba(66,211,146,.3)", background: "rgba(66,211,146,.08)", color: "var(--ok)" }}>{notice}</div> : null}
@@ -193,8 +184,6 @@ export default function TrashPanel({ user }: { user: SessionUser }) {
             </table>
           </div>
         )}
-      </main>
-
       {confirm ? (
         <ConfirmDialog
           title={confirm.title}
@@ -204,6 +193,6 @@ export default function TrashPanel({ user }: { user: SessionUser }) {
           onClose={() => setConfirm(null)}
         />
       ) : null}
-    </>
+    </PageShell>
   );
 }

@@ -7,10 +7,17 @@ export const dynamic = "force-dynamic";
 export default async function FilesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ path?: string; view?: string }>;
+  searchParams: Promise<{ path?: string; view?: string; q?: string }>;
 }) {
   const user = await requireUser();
   ensureCleanupScheduler();
-  const { path, view } = await searchParams;
-  return <FileBrowser user={user} initialPath={path || ""} initialView={view} />;
+  const { path, view, q } = await searchParams;
+  return (
+    <FileBrowser
+      user={user}
+      initialPath={path || ""}
+      initialView={view}
+      initialQuery={q || ""}
+    />
+  );
 }

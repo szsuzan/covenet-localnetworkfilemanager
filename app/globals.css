@@ -92,6 +92,11 @@ button {
   padding: 28px 30px 72px;
 }
 
+.narrow {
+  width: 100%;
+  max-width: 840px;
+}
+
 .sidebar {
   position: sticky;
   top: 0;

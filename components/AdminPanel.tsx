@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import type { SessionUser } from "./types";
 import { KeyIcon, TrashIcon } from "./icons";
 import { formatBytes, formatDate } from "./format";
 import { PromptDialog } from "./Dialogs";
 import ConfirmDialog from "./ConfirmDialog";
-import ThemeToggle from "./ThemeToggle";
+import PageShell from "./PageShell";
 
 type AdminUser = {
   id: number;
@@ -36,7 +35,6 @@ type AuditEntry = {
 };
 
 export default function AdminPanel({ me }: { me: SessionUser }) {
-  const router = useRouter();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
@@ -152,35 +150,9 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
     setDeleteTarget(null);
   }
 
-  async function signOut() {
-    await fetch("/api/auth", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "logout" }),
-    });
-    router.replace("/login");
-    router.refresh();
-  }
-
   return (
-    <>
-      <header className="topbar">
-        <a className="brand" href="/files">
-          <div className="brand-mark">C</div>
-          <span>Cove</span>
-        </a>
-        <div className="grow" />
-        <ThemeToggle />
-        <a className="btn small" href="/files">
-          Back to files
-        </a>
-        <button className="btn small ghost" onClick={() => void signOut()}>
-          Sign out
-        </button>
-      </header>
-
-      <main className="container">
-        <div className="page-head">
+    <PageShell user={me} active="admin">
+      <div className="page-head">
           <h1>Users</h1>
           <span className="pill">{users.length} account(s)</span>
           <span className="grow" />
@@ -423,33 +395,32 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
             )}
           </div>
         </div>
-      </main>
 
-      {resetTarget ? (
-        <PromptDialog
-          title={`Reset password for ${resetTarget.username}`}
-          label="New password"
-          placeholder="At least 12 characters"
-          confirmLabel="Reset password"
-          busy={busy}
-          onSubmit={(value) => {
-            void post({ action: "reset", id: resetTarget.id, password: value });
-            setResetTarget(null);
-          }}
-          onClose={() => setResetTarget(null)}
-        />
-      ) : null}
+        {resetTarget ? (
+          <PromptDialog
+            title={`Reset password for ${resetTarget.username}`}
+            label="New password"
+            placeholder="At least 12 characters"
+            confirmLabel="Reset password"
+            busy={busy}
+            onSubmit={(value) => {
+              void post({ action: "reset", id: resetTarget.id, password: value });
+              setResetTarget(null);
+            }}
+            onClose={() => setResetTarget(null)}
+          />
+        ) : null}
 
-      {deleteTarget ? (
-        <ConfirmDialog
-          title="Delete account"
-          message={`Delete “${deleteTarget.username}”? Their public files stay, and their private folder is archived in the trash.`}
-          confirmLabel="Delete account"
-          busy={confirmBusy}
-          onConfirm={() => void confirmDelete()}
-          onClose={() => setDeleteTarget(null)}
-        />
-      ) : null}
-    </>
+        {deleteTarget ? (
+          <ConfirmDialog
+            title="Delete account"
+            message={`Delete “${deleteTarget.username}”? Their public files stay, and their private folder is archived in the trash.`}
+            confirmLabel="Delete account"
+            busy={confirmBusy}
+            onConfirm={() => void confirmDelete()}
+            onClose={() => setDeleteTarget(null)}
+          />
+        ) : null}
+    </PageShell>
   );
 }
