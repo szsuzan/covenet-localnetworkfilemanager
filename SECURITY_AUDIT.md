@@ -102,8 +102,8 @@ traversal, upload path traversal, CSRF via Origin/Sec-Fetch-Site.
 
 ## Live state
 
-As of 2026-11-02 21:15, the old system unit is disabled and the current build is
-running under the user-level units:
+As of 2026-11-02 22:15, the legacy system unit is not running and the current
+build is running under the user-level units:
 
 ```bash
 systemctl --user status fileshare cove-caddy --no-pager

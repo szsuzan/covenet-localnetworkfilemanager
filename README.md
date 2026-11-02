@@ -224,7 +224,7 @@ immediately with **Run cleanup**.
 
 The app runs as user-level units: `fileshare` (Next on `127.0.0.1:3100`) and
 `cove-caddy` (TLS on `0.0.0.0:3000`). Both are enabled at boot; linger is on for
-the service user. The old system unit `/etc/systemd/system/fileshare.service` is disabled.
+the service user. Only these user units should run; remove any legacy system unit.
 
 ```bash
 systemctl --user status fileshare cove-caddy

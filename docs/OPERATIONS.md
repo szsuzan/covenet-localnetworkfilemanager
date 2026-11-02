@@ -107,8 +107,16 @@ journalctl --user -u fileshare -u cove-caddy -n 100 --no-pager
 ```
 
 `./scripts/deploy.sh` builds the app, restarts `fileshare`, and verifies HTTPS.
-The old system unit `/etc/systemd/system/fileshare.service` is disabled; do not
-enable it again or it will compete for port 3000.
+If an older system unit exists, remove it so it cannot compete for port 3000:
+
+```bash
+sudo systemctl disable --now fileshare.service
+sudo rm -f /etc/systemd/system/fileshare.service
+sudo systemctl daemon-reload
+sudo systemctl reset-failed fileshare.service
+```
+
+Only the user-level `fileshare` and `cove-caddy` units should remain.
 
 ### Health checks
 
@@ -306,7 +314,7 @@ Public and Private spaces, uploads, video playback and PDF preview.
 | Login redirects back to login | Use HTTPS, clear the old `http://` tab, check the clock and cookie settings |
 | `HOST.local` points to an unreachable address | Use the current LAN IP; check mDNS/multicast |
 | Certificate mismatch after network change | Re-run `./deploy/issue-cert.sh` |
-| Port 3000 already in use | `ss -ltnp \| grep 3000`; ensure the old system unit is disabled |
+| Port 3000 already in use | `ss -ltnp \| grep 3000`; remove the legacy system unit if present |
 | Hotspot has no URL | Install the helper, check `dnsmasq`, and start it from the admin page |
 | Tailscale unreachable | `tailscale status`, UFW rule on `tailscale0`, install the CA on the client |
 | Video does not start | Check `journalctl --user -u fileshare` and ffmpeg availability |
