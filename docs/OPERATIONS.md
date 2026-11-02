@@ -212,6 +212,9 @@ It keeps the default incoming policy at deny and does not open SSH on the
 hotspot. Run it again after a LAN subnet change. Override the hotspot subnet with
 `HOTSPOT_CIDR=…` if you changed it.
 
+UFW prints separate IPv4/IPv6 rules, and port 3000 has both TCP and UDP
+(HTTP/3), so several `3000` lines are expected. They are not duplicates.
+
 Do not forward port 3000 from the internet. Confirm the result with:
 
 ```bash

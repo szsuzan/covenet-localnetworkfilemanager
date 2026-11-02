@@ -28,7 +28,7 @@ fi
 delete_port() {
   local port="$1"
   ufw status numbered |
-    sed -nE "s/^\[[[:space:]]*([0-9]+)\].*${port}\/[a-z]+.*ALLOW.*/\1/p" |
+    sed -nE "s~^\[[[:space:]]*([0-9]+)\][[:space:]]+${port}(/[a-z]+)?[[:space:]].*ALLOW.*~\1~p" |
     sort -nr |
     while read -r number; do
       ufw --force delete "$number" >/dev/null
