@@ -56,6 +56,59 @@ tailscale status
 tailscale ip -4
 ```
 
+### No Wi-Fi: run a hotspot
+
+Cove keeps running when the network disappears; only the address changes.
+
+**Option A — use the laptop as the hotspot (no internet required)**
+
+Install the DHCP helper once:
+
+```bash
+sudo pacman -S dnsmasq
+```
+
+Then:
+
+```bash
+./scripts/hotspot.sh start
+```
+
+It asks for a password (min 8 chars), starts SSID **Cove** on `WIFI-INTERFACE`, adds
+UFW rules for the hotspot subnet, and prints the URL:
+
+```
+http://10.42.0.1:3000
+```
+
+Connect the phone/laptop to **Cove** and open that URL. Stop it with:
+
+```bash
+./scripts/hotspot.sh stop
+```
+
+No internet is needed — the hotspot is just a local network. Phones may warn
+“no internet” or try to switch to mobile data; keep them connected. `HOST.local`
+may also work if the client supports mDNS; the IP is the reliable option.
+
+**Option B — use your phone’s hotspot**
+
+Turn on the phone hotspot and connect the laptop to it. Then:
+
+```bash
+ip -4 addr show WIFI-INTERFACE          # find the laptop's hotspot IP/subnet
+sudo ufw allow from <subnet>/24 to any port 3000 proto tcp comment 'Cove hotspot'
+```
+
+Open the laptop’s hotspot IP from the phone or any other device on that hotspot.
+Common subnets are `192.168.43.0/24` (Android) and `172.20.10.0/28` (iPhone).
+
+**Notes**
+
+- Tailscale needs internet; with no internet, use the hotspot IP instead.
+- With no network at all, Cove still works on the laptop itself at
+  `http://127.0.0.1:3000`.
+
 To re-enable TLS later, see [SECURITY.md](SECURITY.md). The HTTPS/Caddy units are
 installed but disabled.
 
