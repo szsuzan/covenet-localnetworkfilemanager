@@ -1,0 +1,7 @@
+[Unit]
+Description=Back up Cove files and database
+
+[Service]
+Type=oneshot
+Environment=BACKUP_DEST=/srv/cove/backups
+ExecStart=/home/cove/cove/scripts/backup.sh

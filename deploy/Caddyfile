@@ -1,0 +1,16 @@
+{
+	admin off
+	auto_https off
+}
+
+http://LAN-IP:3000 {
+	encode zstd gzip
+
+	header {
+		-Server
+	}
+
+	reverse_proxy 127.0.0.1:3100 {
+		flush_interval -1
+	}
+}
