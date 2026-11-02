@@ -2,7 +2,7 @@ import fs from "node:fs";
 import { NextResponse, type NextRequest } from "next/server";
 import { apiUser, fail, originOk } from "@/lib/api";
 import { relPath, resolveUserPath } from "@/lib/paths";
-import { hlsKey, startTranscode } from "@/lib/transcode";
+import { cancelTranscode, hlsKey, isKey, startTranscode } from "@/lib/transcode";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,4 +27,14 @@ export async function POST(req: NextRequest) {
   } catch {
     return fail("Not found", 404);
   }
+}
+
+export async function DELETE(req: NextRequest) {
+  if (!originOk(req)) return fail("Bad origin", 403);
+  if (!(await apiUser())) return fail("Not signed in", 401);
+  const body = (await req.json().catch(() => null)) as { key?: string } | null;
+  const key = body?.key || "";
+  if (!isKey(key)) return fail("Invalid key", 400);
+  cancelTranscode(key);
+  return NextResponse.json({ ok: true });
 }

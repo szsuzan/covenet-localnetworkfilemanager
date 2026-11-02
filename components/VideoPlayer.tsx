@@ -216,6 +216,19 @@ export default function VideoPlayer({ item }: { item: Item }) {
     return () => window.clearInterval(timer);
   }, [mode, key]);
 
+  // Stop the old transcode when seeking or leaving the player.
+  useEffect(() => {
+    if (!key) return;
+    return () => {
+      void fetch("/api/hls", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key }),
+        keepalive: true,
+      }).catch(() => {});
+    };
+  }, [key]);
+
   // Attach hls.js once segments are available.
   useEffect(() => {
     if (mode !== "hls" || !key) return;

@@ -23,6 +23,7 @@ export default function PdfViewer({ item }: { item: Item }) {
   const [pageCount, setPageCount] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [width, setWidth] = useState(0);
+  const [height, setHeight] = useState(0);
   const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState("");
@@ -90,9 +91,11 @@ export default function PdfViewer({ item }: { item: Item }) {
     if (!stage) return;
     const observer = new ResizeObserver((entries) => {
       setWidth(entries[0]?.contentRect.width || stage.clientWidth);
+      setHeight(entries[0]?.contentRect.height || stage.clientHeight);
     });
     observer.observe(stage);
     setWidth(stage.clientWidth);
+    setHeight(stage.clientHeight);
     return () => observer.disconnect();
   }, []);
 
@@ -103,7 +106,7 @@ export default function PdfViewer({ item }: { item: Item }) {
   }, []);
 
   useEffect(() => {
-    if (!doc || width <= 0) return;
+    if (!doc || width <= 0 || height <= 0) return;
     let cancelled = false;
 
     (async () => {
@@ -113,7 +116,11 @@ export default function PdfViewer({ item }: { item: Item }) {
         const pdfPage = await doc.getPage(page);
         if (cancelled) return;
         const base = pdfPage.getViewport({ scale: 1 });
-        const fit = Math.max(0.1, (width - 48) / base.width);
+        // Fit the whole page at 100% zoom, not just its width.
+        const fit = Math.max(
+          0.1,
+          Math.min((width - 8) / base.width, (height - 8) / base.height),
+        );
         const dpr = window.devicePixelRatio || 1;
         const scale = Math.min(fit * zoom, 4.5 / dpr);
         const viewport = pdfPage.getViewport({ scale: scale * dpr });
@@ -143,7 +150,7 @@ export default function PdfViewer({ item }: { item: Item }) {
       cancelled = true;
       renderTask.current?.cancel();
     };
-  }, [doc, page, zoom, width]);
+  }, [doc, height, page, width, zoom]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {

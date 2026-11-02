@@ -43,6 +43,7 @@ function runningPid(key: string) {
 }
 
 const activeKeys = new Set<string>();
+const activeChildren = new Map<string, ReturnType<typeof spawn>>();
 const queuedKeys = new Set<string>();
 const pending: Array<{ abs: string; key: string; start: number }> = [];
 let active = 0;
@@ -103,10 +104,12 @@ function spawnJob(abs: string, key: string, start: number) {
     { detached: true, stdio: ["ignore", log, log] },
   );
   child.unref();
+  activeChildren.set(key, child);
   if (child.pid) {
     fs.writeFileSync(path.join(dir, "ffmpeg.pid"), String(child.pid));
   }
   child.on("exit", () => {
+    activeChildren.delete(key);
     fs.rmSync(path.join(dir, "ffmpeg.pid"), { force: true });
     activeKeys.delete(key);
     active = Math.max(0, active - 1);
@@ -131,4 +134,31 @@ export function startTranscode(
   queuedKeys.add(key);
   pump();
   return "running";
+}
+
+/** Stop a queued/running transcode. Completed cache entries are left intact. */
+export function cancelTranscode(key: string): boolean {
+  const queued = pending.findIndex((job) => job.key === key);
+  if (queued >= 0) {
+    pending.splice(queued, 1);
+    queuedKeys.delete(key);
+    return true;
+  }
+
+  const child = activeChildren.get(key);
+  if (!child?.pid) return false;
+
+  // The worker is detached, so kill the process group when possible.
+  try {
+    process.kill(-child.pid, "SIGTERM");
+  } catch {
+    try {
+      child.kill("SIGTERM");
+    } catch {
+      /* already gone */
+    }
+  }
+  // Do not leave a partial playlist that looks "ready" for a later seek.
+  fs.rmSync(hlsDir(key), { recursive: true, force: true });
+  return true;
 }
