@@ -1,4 +1,4 @@
-# Cove admin guide
+# CoveNet admin guide
 
 The admin account manages users, storage, cleanup, the audit log and the offline
 hotspot. The admin is still a normal user for Public/Private browsing: the admin
@@ -94,7 +94,7 @@ can alter it.
 
 ## Offline hotspot
 
-The hotspot turns the laptop into a local Wi-Fi network so phones can reach Cove
+The hotspot turns the laptop into a local Wi-Fi network so phones can reach CoveNet
 without internet.
 
 ### One-time setup
@@ -126,8 +126,8 @@ non-local addresses; the request would be cut off when Wi-Fi changes.
 
 1. Choose an SSID and password.
 2. Click **Start hotspot**.
-3. On the phone scan **1 · Join Wi-Fi**, then **2 · Open Cove**.
-4. On a new phone, bypass the certificate warning once and install the Cove CA.
+3. On the phone scan **1 · Join Wi-Fi**, then **2 · Open CoveNet**.
+4. On a new phone, bypass the certificate warning once and install the CoveNet CA.
 
 The QR URL is `https://10.42.0.1:3000`. The certificate includes that address.
 Phones may warn that the hotspot has no internet; keep them connected.

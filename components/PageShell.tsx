@@ -70,8 +70,8 @@ export default function PageShell({
     <div className="app-shell">
       <aside className="sidebar">
         <a className="brand sidebar-brand" href="/files">
-          <div className="brand-mark">C</div>
-          <span>Cove</span>
+          <img className="brand-logo" src="/covenet-icon.png" alt="" />
+          <span>CoveNet</span>
         </a>
 
         <nav className="side-nav">
@@ -142,8 +142,8 @@ export default function PageShell({
       <div className="app-main">
         <header className="topbar">
           <a className="brand mobile-brand" href="/files">
-            <div className="brand-mark">C</div>
-            <span>Cove</span>
+            <img className="brand-logo" src="/covenet-icon.png" alt="" />
+            <span>CoveNet</span>
           </a>
           <form className="search" onSubmit={search}>
             <SearchIcon />

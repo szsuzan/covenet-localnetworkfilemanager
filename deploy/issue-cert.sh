@@ -49,5 +49,5 @@ openssl verify -CAfile "$CA/root.crt" "$OUT/cove.crt"
 
 echo "Issued $OUT/cove.crt"
 echo "SANs: $SANS"
-echo "Restarting Cove TLS proxy..."
+echo "Restarting CoveNet TLS proxy..."
 systemctl --user restart cove-caddy.service

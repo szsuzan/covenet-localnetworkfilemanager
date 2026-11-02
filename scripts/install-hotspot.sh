@@ -11,7 +11,7 @@ fi
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_USER="${SUDO_USER:-}"
 if [ -z "$APP_USER" ]; then
-  echo "Run this with sudo from the account that owns the Cove checkout." >&2
+  echo "Run this with sudo from the account that owns the CoveNet checkout." >&2
   exit 1
 fi
 
@@ -34,5 +34,5 @@ echo "  user:     $APP_USER"
 echo "  helper:   /usr/local/bin/cove-hotspot"
 echo "  sudoers:  /etc/sudoers.d/cove-hotspot"
 echo
-echo "Open Admin → Offline hotspot in Cove (preferably on the laptop at"
+echo "Open Admin → Offline hotspot in CoveNet (preferably on the laptop at"
 echo "https://127.0.0.1:3000, because starting the hotspot disconnects Wi-Fi)."

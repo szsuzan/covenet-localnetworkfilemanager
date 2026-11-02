@@ -1,7 +1,7 @@
 [Unit]
-Description=Back up Cove files and database
+Description=Back up CoveNet files and database
 
 [Service]
 Type=oneshot
-Environment=BACKUP_DEST=%h/Backups/Cove
+Environment=BACKUP_DEST=%h/Backups/CoveNet
 ExecStart=%h/cove/scripts/backup.sh

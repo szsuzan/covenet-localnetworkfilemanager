@@ -226,17 +226,12 @@ button {
   white-space: nowrap;
 }
 
-.brand-mark {
-  display: grid;
-  place-items: center;
+.brand-logo {
+  display: block;
   width: 34px;
   height: 34px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  box-shadow: 0 8px 22px rgba(111, 140, 255, 0.35);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 800;
+  flex: 0 0 34px;
+  object-fit: contain;
 }
 
 .mobile-brand {
@@ -1180,10 +1175,10 @@ pre.text-preview {
   z-index: 1;
 }
 
-.auth-brand .brand-mark {
+.auth-brand .brand-logo {
   width: 38px;
   height: 38px;
-  border-radius: 11px;
+  flex-basis: 38px;
 }
 
 .auth-copy {
@@ -1325,15 +1320,27 @@ pre.text-preview {
   text-align: center;
 }
 
-.login-brand .brand-mark {
-  width: 46px;
-  height: 46px;
-  border-radius: 13px;
-  font-size: 20px;
+.login-brand .brand-logo {
+  width: 104px;
+  height: 104px;
+  flex-basis: 104px;
+  margin-bottom: 2px;
+}
+
+.login-name {
+  font-size: 27px;
+  font-weight: 750;
+  letter-spacing: -0.04em;
+}
+
+.login-caption {
+  color: var(--muted);
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
 }
 
 .login-brand h1 {
-  margin: 6px 0 0;
+  margin: 12px 0 0;
   font-size: 22px;
   letter-spacing: -0.025em;
 }
@@ -2081,6 +2088,33 @@ html[data-theme="light"] .viewer {
   z-index: 1;
 }
 
+.home-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.home-brand-logo {
+  width: 80px;
+  height: 80px;
+  flex: 0 0 80px;
+  object-fit: contain;
+}
+
+.home-brand strong {
+  display: block;
+  font-size: 22px;
+  letter-spacing: -0.035em;
+}
+
+.home-brand span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
 .home-kicker {
   display: inline-flex;
   align-items: center;
@@ -2609,6 +2643,16 @@ html[data-theme="light"] .home-art-tile {
 
   .home-hero p {
     font-size: 13.5px;
+  }
+
+  .home-brand-logo {
+    width: 56px;
+    height: 56px;
+    flex-basis: 56px;
+  }
+
+  .home-brand strong {
+    font-size: 19px;
   }
 
   .home-actions .btn {

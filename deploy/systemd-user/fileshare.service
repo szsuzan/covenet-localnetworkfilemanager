@@ -1,5 +1,5 @@
 [Unit]
-Description=Cove internal file share
+Description=CoveNet internal file share
 After=network-online.target
 Wants=network-online.target
 

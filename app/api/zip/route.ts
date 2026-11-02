@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
   const filename =
     entries.length === 1
       ? `${entries[0].name.replace(/[^\w.-]+/g, "_")}.zip`
-      : "Cove-selection.zip";
+      : "CoveNet-selection.zip";
 
   return new Response(Readable.toWeb(output) as unknown as BodyInit, {
     headers: {

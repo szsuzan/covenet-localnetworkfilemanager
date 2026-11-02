@@ -1,10 +1,10 @@
-# Cove user guide
+# CoveNet user guide
 
-Cove is the private file and media server on this network. This guide is for
+CoveNet is the private file and media server on this network. This guide is for
 people who have an account. For server setup, see
 [Operations](OPERATIONS.md); for admin tasks, see [Admin guide](ADMIN_GUIDE.md).
 
-## Open Cove
+## Open CoveNet
 
 Use the stable address:
 
@@ -17,11 +17,11 @@ The IP address also works, for example `https://LAN-IP:3000`. Plain
 
 ### First visit: trust the certificate
 
-Cove uses a local certificate authority. The first visit shows a browser
-warning. That is expected until the Cove CA is installed.
+CoveNet uses a local certificate authority. The first visit shows a browser
+warning. That is expected until the CoveNet CA is installed.
 
 1. Continue to the login page.
-2. Click **Install the Cove certificate**.
+2. Click **Install the CoveNet certificate**.
 3. Install the downloaded `cove-ca.crt` as a trusted root/CA.
 4. Reload the page; the warning should be gone.
 
@@ -32,7 +32,7 @@ steps. On a phone, this is a one-time setup per device.
 
 1. Enter your username and password.
 2. If 2FA is enabled, enter the six-digit authenticator code.
-3. If the admin gave you a temporary password, Cove asks you to change it before
+3. If the admin gave you a temporary password, CoveNet asks you to change it before
    you can open files.
 
 New passwords must be at least 8 characters and use at least three of:
@@ -170,11 +170,11 @@ authenticator, an admin must reset 2FA for you.
 ## Phone and tablet
 
 The layout switches to bottom navigation on narrow screens. Uploads from the
-camera roll and the camera capture button work over HTTPS once the Cove CA is
+camera roll and the camera capture button work over HTTPS once the CoveNet CA is
 trusted.
 
 If a phone warns "no internet" while connected to the laptop hotspot, keep the
-Wi-Fi connection and choose "stay connected"; Cove is local-only.
+Wi-Fi connection and choose "stay connected"; CoveNet is local-only.
 
 ## Common problems
 
@@ -182,7 +182,7 @@ Wi-Fi connection and choose "stay connected"; Cove is local-only.
 |---|---|
 | Certificate warning | Install `cove-ca.crt` as a trusted root/CA, then reload |
 | Login does not stick | Make sure the address starts with `https://`; clear old `http://` tabs |
-| `502 Bad Gateway` | Server-side issue; ask the admin to check the Cove services |
+| `502 Bad Gateway` | Server-side issue; ask the admin to check the CoveNet services |
 | `HOST.local` does not resolve | Use the current IP, or check that mDNS/multicast is allowed on the Wi-Fi |
 | "Too many attempts" | Wait 15 minutes or ask the admin to clear the lockout |
 | Upload button missing | Ask the admin to enable upload permission |

@@ -1,4 +1,8 @@
-# Cove
+<p align="center">
+  <img src="public/covenet-logo.png" alt="CoveNet" width="180">
+</p>
+
+# CoveNet
 
 Private file and media server for a trusted LAN. Upload, browse, stream and share
 files between accounts — with per-user private storage, two-factor auth and audit
@@ -27,8 +31,8 @@ Next.js 16 · SQLite · local filesystem · ffmpeg · sharp
 
 ### First time on each device
 
-Cove uses a local certificate authority (Caddy internal CA). On the first visit
-the browser will warn; continue to the login page and click **Install the Cove
+CoveNet uses a local certificate authority (Caddy internal CA). On the first visit
+the browser will warn; continue to the login page and click **Install the CoveNet
 certificate** (`/cove-ca.crt`). Trust it as a root/CA, then reload. The
 certificate covers `HOST.local`, the current LAN IP, the hotspot IP
 `10.42.0.1`, the Tailscale IP and the MagicDNS name.
@@ -55,13 +59,13 @@ only a fallback.
 ### Remote access with Tailscale (any network)
 
 Tailscale gives the machine a stable `100.x.y.z` address and a MagicDNS name that
-work from any network, without exposing Cove to the internet.
+work from any network, without exposing CoveNet to the internet.
 
 ```bash
 sudo tailscale up
 sudo tailscale set --operator="$USER"
-sudo ufw allow in on tailscale0 to any port 3000 proto tcp comment 'Cove Tailscale'
-sudo ufw allow in on tailscale0 to any port 3000 proto udp comment 'Cove Tailscale'
+sudo ufw allow in on tailscale0 to any port 3000 proto tcp comment 'CoveNet Tailscale'
+sudo ufw allow in on tailscale0 to any port 3000 proto udp comment 'CoveNet Tailscale'
 ```
 
 Use:
@@ -69,8 +73,8 @@ Use:
 - `https://TAILSCALE-IP:3000` or
 - `https://HOST.TAILNET.ts.net:3000`
 
-Install the Cove CA on the remote device once (same `/cove-ca.crt` link).
-Traffic is encrypted by both WireGuard and Cove TLS. Port 3000 is the only
+Install the CoveNet CA on the remote device once (same `/cove-ca.crt` link).
+Traffic is encrypted by both WireGuard and CoveNet TLS. Port 3000 is the only
 inbound port.
 
 Get the name/IP with:
@@ -82,7 +86,7 @@ tailscale ip -4
 
 ### No Wi-Fi: run a hotspot
 
-Cove keeps running when the network disappears; only the address changes.
+CoveNet keeps running when the network disappears; only the address changes.
 
 **Option A — use the laptop as the hotspot (with in-app QR sharing)**
 
@@ -96,7 +100,7 @@ Then in **Admin → Offline hotspot**:
 
 1. Choose an SSID and password
 2. Click **Start hotspot**
-3. Scan **1 · Join Wi-Fi**, then **2 · Open Cove**
+3. Scan **1 · Join Wi-Fi**, then **2 · Open CoveNet**
 
 Starting it disconnects the laptop from its current Wi-Fi, so open the admin
 page on the laptop at `https://127.0.0.1:3000` first (the certificate includes
@@ -110,7 +114,7 @@ on the laptop too, use Ethernet or a second Wi-Fi adapter as the upstream.
 No internet is needed — the hotspot is just a local network. Phones may warn
 “no internet” or try to switch to mobile data; keep them connected. The QR URL
 is `https://10.42.0.1:3000`; on a new phone, bypass the certificate warning once
-and install the Cove CA from the login page. `HOST.local` may also work if the
+and install the CoveNet CA from the login page. `HOST.local` may also work if the
 client supports mDNS.
 
 **Option B — use your phone’s hotspot**
@@ -119,11 +123,11 @@ Turn on the phone hotspot and connect the laptop to it. Then:
 
 ```bash
 ip -4 addr show WIFI-INTERFACE          # find the laptop's hotspot IP/subnet
-sudo ufw allow from <subnet>/24 to any port 3000 proto tcp comment 'Cove hotspot'
+sudo ufw allow from <subnet>/24 to any port 3000 proto tcp comment 'CoveNet hotspot'
 ```
 
 Open `https://<laptop-hotspot-ip>:3000` from the phone or any other device on
-that hotspot (trust the Cove CA once). Common subnets are `192.168.43.0/24`
+that hotspot (trust the CoveNet CA once). Common subnets are `192.168.43.0/24`
 (Android) and `172.20.10.0/28` (iPhone); the generated certificate covers only
 the laptop’s own `10.42.0.1` hotspot, so re-run `./deploy/issue-cert.sh` if you
 use a different subnet.
@@ -131,7 +135,7 @@ use a different subnet.
 **Notes**
 
 - Tailscale needs internet; with no internet, use the hotspot IP instead.
-- With no network at all, Cove still works on the laptop itself at
+- With no network at all, CoveNet still works on the laptop itself at
   `https://127.0.0.1:3000`.
 
 TLS is terminated by Caddy on port 3000; Next listens only on

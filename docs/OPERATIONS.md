@@ -1,6 +1,6 @@
-# Cove operations
+# CoveNet operations
 
-Install, run, certificate, backup and troubleshooting notes for the Cove server.
+Install, run, certificate, backup and troubleshooting notes for the CoveNet server.
 For user and admin behavior see the [User guide](USER_GUIDE.md) and
 [Admin guide](ADMIN_GUIDE.md).
 
@@ -69,7 +69,7 @@ loginctl enable-linger "$USER"
 ### Certificate bootstrap
 
 `deploy/issue-cert.sh` signs a certificate with Caddy's local root CA. On an
-existing Cove machine that CA is already at:
+existing CoveNet machine that CA is already at:
 
 ```
 ~/.local/share/caddy/pki/authorities/local/root.crt
@@ -81,7 +81,7 @@ starting it briefly with a temporary `tls internal` site), then stop it. If the
 files above are missing, the certificate script exits with an error instead of
 creating a second CA.
 
-Then issue the Cove certificate and start the services:
+Then issue the CoveNet certificate and start the services:
 
 ```bash
 ./deploy/issue-cert.sh
@@ -191,14 +191,14 @@ hostname -I
 ```bash
 sudo tailscale up
 sudo tailscale set --operator="$USER"
-sudo ufw allow in on tailscale0 to any port 3000 proto tcp comment 'Cove Tailscale'
-sudo ufw allow in on tailscale0 to any port 3000 proto udp comment 'Cove Tailscale'
+sudo ufw allow in on tailscale0 to any port 3000 proto tcp comment 'CoveNet Tailscale'
+sudo ufw allow in on tailscale0 to any port 3000 proto udp comment 'CoveNet Tailscale'
 tailscale status
 tailscale ip -4
 ```
 
 Use `https://TAILSCALE-IP:3000` or
-`https://HOST.TAILNET.ts.net:3000`, and install the Cove CA on the remote
+`https://HOST.TAILNET.ts.net:3000`, and install the CoveNet CA on the remote
 device. Port 3000 is the only inbound port; no public funnel is needed.
 
 ### Firewall
@@ -214,21 +214,21 @@ HOTSPOT_CIDR=10.42.0.0/24
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 
-sudo ufw allow from "$LAN_CIDR" to any port 3000 proto tcp comment 'Cove LAN'
-sudo ufw allow from "$LAN_CIDR" to any port 3000 proto udp comment 'Cove LAN'
-sudo ufw allow from "$HOTSPOT_CIDR" to any port 3000 proto tcp comment 'Cove hotspot'
-sudo ufw allow from "$HOTSPOT_CIDR" to any port 3000 proto udp comment 'Cove hotspot'
-sudo ufw allow in on tailscale0 to any port 3000 proto tcp comment 'Cove Tailscale'
-sudo ufw allow in on tailscale0 to any port 3000 proto udp comment 'Cove Tailscale'
+sudo ufw allow from "$LAN_CIDR" to any port 3000 proto tcp comment 'CoveNet LAN'
+sudo ufw allow from "$LAN_CIDR" to any port 3000 proto udp comment 'CoveNet LAN'
+sudo ufw allow from "$HOTSPOT_CIDR" to any port 3000 proto tcp comment 'CoveNet hotspot'
+sudo ufw allow from "$HOTSPOT_CIDR" to any port 3000 proto udp comment 'CoveNet hotspot'
+sudo ufw allow in on tailscale0 to any port 3000 proto tcp comment 'CoveNet Tailscale'
+sudo ufw allow in on tailscale0 to any port 3000 proto udp comment 'CoveNet Tailscale'
 
 sudo ufw allow from "$LAN_CIDR" to any port 22 proto tcp comment 'SSH LAN'
 sudo ufw allow in on tailscale0 to any port 22 proto tcp comment 'SSH Tailscale'
 
-sudo ufw allow from "$LAN_CIDR" to any port 5353 proto udp comment 'Cove mDNS'
-sudo ufw allow from "$HOTSPOT_CIDR" to any port 5353 proto udp comment 'Cove hotspot mDNS'
-sudo ufw allow in on "$LAN_IF" to any port 67 proto udp comment 'Cove hotspot DHCP'
-sudo ufw allow from "$HOTSPOT_CIDR" to any port 53 proto udp comment 'Cove hotspot DNS'
-sudo ufw allow from "$HOTSPOT_CIDR" to any port 53 proto tcp comment 'Cove hotspot DNS'
+sudo ufw allow from "$LAN_CIDR" to any port 5353 proto udp comment 'CoveNet mDNS'
+sudo ufw allow from "$HOTSPOT_CIDR" to any port 5353 proto udp comment 'CoveNet hotspot mDNS'
+sudo ufw allow in on "$LAN_IF" to any port 67 proto udp comment 'CoveNet hotspot DHCP'
+sudo ufw allow from "$HOTSPOT_CIDR" to any port 53 proto udp comment 'CoveNet hotspot DNS'
+sudo ufw allow from "$HOTSPOT_CIDR" to any port 53 proto tcp comment 'CoveNet hotspot DNS'
 
 sudo ufw enable
 ```
@@ -330,7 +330,7 @@ journalctl --user -u cove-caddy -f
 
 ## Security
 
-Cove is for a trusted private network. The threat model, accepted risks and
+CoveNet is for a trusted private network. The threat model, accepted risks and
 remaining actions are in [Security](../SECURITY.md) and
 [the audit](../SECURITY_AUDIT.md). Important operational items:
 

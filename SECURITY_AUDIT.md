@@ -1,4 +1,4 @@
-# Cove security & functionality audit
+# CoveNet security & functionality audit
 
 Date: 2026-11-02  
 Scope: application code, HTTP APIs, authentication, file handling, uploads,

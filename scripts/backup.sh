@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Hardlink snapshot backup of Cove files + SQLite database.
+# Hardlink snapshot backup of CoveNet files + SQLite database.
 # Set BACKUP_DEST to another disk for real protection.
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEST="${BACKUP_DEST:-}"
 if [ -z "$DEST" ]; then
-  echo "BACKUP_DEST is not set (example: /mnt/backup/Cove)" >&2
+  echo "BACKUP_DEST is not set (example: /mnt/backup/CoveNet)" >&2
   exit 1
 fi
 

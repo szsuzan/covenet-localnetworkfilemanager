@@ -60,7 +60,7 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
   const [hotspot, setHotspot] = useState<Hotspot | null>(null);
   const [hotspotBusy, setHotspotBusy] = useState(false);
   const [hotspotError, setHotspotError] = useState("");
-  const [hotspotSsid, setHotspotSsid] = useState("Cove");
+  const [hotspotSsid, setHotspotSsid] = useState("CoveNet");
   const [hotspotPassword, setHotspotPassword] = useState("");
   const [localAdmin, setLocalAdmin] = useState(false);
 
@@ -89,7 +89,7 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Could not load hotspot status");
       setHotspot(data);
-      setHotspotSsid((current) => current || data.ssid || "Cove");
+      setHotspotSsid((current) => current || data.ssid || "CoveNet");
       setHotspotPassword((current) => current || data.password || "");
     } catch (loadError) {
       setHotspotError(
@@ -357,8 +357,8 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
                   ) : null}
                   {hotspot.urlQr ? (
                     <div className="qr-card">
-                      <img src={hotspot.urlQr} alt="QR code to open Cove" />
-                      <strong>2 · Open Cove</strong>
+                      <img src={hotspot.urlQr} alt="QR code to open CoveNet" />
+                      <strong>2 · Open CoveNet</strong>
                       <span>{hotspot.url}</span>
                     </div>
                   ) : null}
@@ -368,11 +368,11 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
                       <code>{hotspot.password || "not saved"}</code>
                     </div>
                     <p className="form-hint">
-                      Scan the Wi-Fi code first, then the Cove code.
+                      Scan the Wi-Fi code first, then the CoveNet code.
                     </p>
                     {!hotspot.password ? (
                       <p className="form-hint">
-                        This hotspot was started outside Cove, so the password
+                        This hotspot was started outside CoveNet, so the password
                         is unknown here.
                       </p>
                     ) : null}
@@ -441,7 +441,7 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
                 {localAdmin ? (
                   <p className="form-hint">
                     Starting the hotspot disconnects the laptop from its current
-                    Wi-Fi. Reconnect phones to the Cove hotspot after it starts.
+                    Wi-Fi. Reconnect phones to the CoveNet hotspot after it starts.
                   </p>
                 ) : (
                   <p className="form-hint">

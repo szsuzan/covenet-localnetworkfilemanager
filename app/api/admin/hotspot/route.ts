@@ -72,7 +72,7 @@ async function status(): Promise<HotspotStatus> {
   const saved = readSaved();
 
   let running = false;
-  let ssid = saved?.ssid || "Cove";
+  let ssid = saved?.ssid || "CoveNet";
   let ip = "";
   let error = "";
 

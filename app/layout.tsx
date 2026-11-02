@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Cove — private files",
+  title: "CoveNet — private files",
   description: "Private internal file and media server",
-  applicationName: "Cove",
+  applicationName: "CoveNet",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

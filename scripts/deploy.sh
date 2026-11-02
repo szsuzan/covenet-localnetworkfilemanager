@@ -5,5 +5,5 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 npm run build
 systemctl --user restart fileshare.service
 sleep 1
-curl -s --cacert public/cove-ca.crt -o /dev/null -w "Cove is up: %{http_code}\n" \
+curl -s --cacert public/cove-ca.crt -o /dev/null -w "CoveNet is up: %{http_code}\n" \
   https://127.0.0.1:3000/login

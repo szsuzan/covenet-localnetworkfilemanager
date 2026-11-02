@@ -1,4 +1,4 @@
-# Cove development
+# CoveNet development
 
 This is a small self-hosted Next.js app. Keep changes direct, keep the existing
 layers, and prefer deleting code over adding abstractions.

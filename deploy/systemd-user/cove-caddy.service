@@ -1,5 +1,5 @@
 [Unit]
-Description=Cove TLS proxy
+Description=CoveNet TLS proxy
 After=network-online.target fileshare.service
 Wants=network-online.target fileshare.service
 

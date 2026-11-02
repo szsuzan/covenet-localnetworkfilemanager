@@ -1,6 +1,6 @@
 # Security model
 
-Cove is designed for a **trusted private LAN** with a small number of known users.
+CoveNet is designed for a **trusted private LAN** with a small number of known users.
 It is not a public-internet service.
 
 > See [SECURITY_AUDIT.md](SECURITY_AUDIT.md) for the latest test matrix and actions.
@@ -71,7 +71,7 @@ It is not a public-internet service.
 
 ## Operational checklist
 
-- [ ] Install the Cove CA on every client before using it
+- [ ] Install the CoveNet CA on every client before using it
 - [ ] Enable 2FA for the admin account
 - [ ] Re-run `./deploy/issue-cert.sh` after an IP change and before it expires
 - [ ] Restrict SSH to the LAN/Tailscale and use keys

@@ -12,8 +12,8 @@ export default async function LoginPage() {
     <div className="auth-shell">
       <section className="auth-hero">
         <div className="brand auth-brand">
-          <div className="brand-mark">C</div>
-          <span>Cove</span>
+          <img className="brand-logo" src="/covenet-icon.png" alt="" />
+          <span>CoveNet</span>
         </div>
         <div className="auth-copy">
           <span className="auth-kicker">Your private file space</span>
@@ -45,16 +45,18 @@ export default async function LoginPage() {
         </div>
         <div className="login-card">
           <div className="login-brand">
-            <div className="brand-mark">C</div>
+            <img className="brand-logo login-logo" src="/covenet-icon.png" alt="" />
+            <span className="login-name">CoveNet</span>
+            <span className="login-caption">Private files. Shared simply.</span>
             <h1>Welcome back</h1>
-            <p>Sign in to continue to Cove</p>
+            <p>Sign in to continue</p>
           </div>
           <LoginForm />
         </div>
-        <p className="auth-foot">Cove · private file server</p>
+        <p className="auth-foot">CoveNet · private file server</p>
         <p className="auth-foot">
           <a href="/cove-ca.crt" download>
-            Install the Cove certificate
+            Install the CoveNet certificate
           </a>
         </p>
       </section>

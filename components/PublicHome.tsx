@@ -136,6 +136,13 @@ export default function PublicHome({
     <div className="home">
       <section className="home-hero">
         <div className="home-hero-copy">
+          <div className="home-brand">
+            <img className="home-brand-logo" src="/covenet-icon.png" alt="" />
+            <div>
+              <strong>CoveNet</strong>
+              <span>Private files. Shared simply.</span>
+            </div>
+          </div>
           <span className="home-kicker">Public library</span>
           <h1>
             Shared with everyone,
