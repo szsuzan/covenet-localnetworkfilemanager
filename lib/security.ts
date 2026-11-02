@@ -16,7 +16,7 @@ const COMMON = new Set([
 
 /** Returns an error message, or null when the password is acceptable. */
 export function validatePassword(password: string, username: string) {
-  if (password.length < 12) return "Password must be at least 12 characters";
+  if (password.length < 8) return "Password must be at least 8 characters";
   if (password.length > 200) return "Password is too long";
   if (COMMON.has(password.toLowerCase())) return "That password is too common";
   if (username.length >= 3 && password.toLowerCase().includes(username.toLowerCase())) {

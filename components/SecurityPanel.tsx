@@ -29,7 +29,7 @@ export default function SecurityPanel({ user }: { user: SessionUser }) {
     event.preventDefault();
     setPwError("");
     setNotice("");
-    if (next.length < 12) return setPwError("Use at least 12 characters");
+    if (next.length < 8) return setPwError("Use at least 8 characters");
     if (next !== confirm) return setPwError("New passwords do not match");
     setPwBusy(true);
     try {
@@ -185,7 +185,7 @@ export default function SecurityPanel({ user }: { user: SessionUser }) {
                 required
               />
               <span className="form-hint">
-                At least 12 characters, 3 of: lowercase, uppercase, numbers, symbols.
+                At least 8 characters, 3 of: lowercase, uppercase, numbers, symbols.
               </span>
             </div>
             <div className="field">

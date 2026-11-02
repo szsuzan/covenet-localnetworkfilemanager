@@ -418,7 +418,7 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="min 12 characters"
+                placeholder="min 8 characters"
                 required
               />
             </div>
@@ -599,7 +599,7 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
           <PromptDialog
             title={`Reset password for ${resetTarget.username}`}
             label="New password"
-            placeholder="At least 12 characters"
+            placeholder="At least 8 characters"
             confirmLabel="Reset password"
             busy={busy}
             onSubmit={(value) => {

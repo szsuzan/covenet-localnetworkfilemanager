@@ -112,7 +112,7 @@ installed but disabled.
 
 The seeded admin account is `admin`. The original `admin123` password was flagged
 for mandatory change and has since been replaced — use the password you set.
-New passwords require at least 12 characters and 3 of: lowercase, uppercase,
+New passwords require at least 8 characters and 3 of: lowercase, uppercase,
 numbers, symbols.
 
 ## Features

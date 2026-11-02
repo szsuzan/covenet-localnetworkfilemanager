@@ -14,7 +14,7 @@ It is not a public-internet service.
 |---|---|
 | Transport | Plain HTTP on port 3000 on the LAN (TLS disabled); Tailscale access is encrypted by WireGuard |
 | Sessions | `HttpOnly`, `SameSite=Lax` cookie (not `Secure` in HTTP mode), SHA-256 token hashes, 30-day absolute + 7-day idle expiry, 10-session cap, revoke-all |
-| Passwords | bcrypt cost 12, minimum 12 chars with 3 character classes, no username, small common-password blocklist, forced change of the seeded default |
+| Passwords | bcrypt cost 12, minimum 8 chars with 3 character classes, no username, small common-password blocklist, forced change of the seeded default |
 | Login | Generic errors, dummy-hash timing equalisation, persisted throttling (10 per account+IP, 40 per IP per 15 min, 15-minute lock) |
 | Second factor | Optional TOTP (SHA-1, 6 digits, 30 s, ±1 window), QR/secret setup, admin reset |
 | CSRF | SameSite=Lax plus `Origin`/`Sec-Fetch-Site` validation on every mutation |
