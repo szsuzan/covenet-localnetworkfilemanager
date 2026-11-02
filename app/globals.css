@@ -2796,6 +2796,41 @@ html[data-theme="light"] .home-art-tile {
   object-fit: contain;
   background: #000;
   cursor: pointer;
+  animation: vpFadeIn 0.25s ease both;
+}
+
+.vp-loading {
+  display: grid;
+  place-items: center;
+  min-height: clamp(220px, 52vh, 520px);
+  animation: vpFadeIn 0.2s ease both;
+}
+
+.vp-loading-poster {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 0.35;
+  filter: blur(2px);
+}
+
+.vp-loading::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.vp-loading .vp-spinner {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes vpFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .vp:fullscreen {
@@ -3032,7 +3067,15 @@ html[data-theme="light"] .home-art-tile {
   top: 50%;
   left: 50%;
   z-index: 2;
+  opacity: 0;
+  visibility: hidden;
   transform: translate(-50%, -50%);
+  transition: opacity 0.18s ease, visibility 0.18s ease;
+}
+
+.vp-spinner-center.is-visible {
+  opacity: 1;
+  visibility: visible;
 }
 
 .vp-status {

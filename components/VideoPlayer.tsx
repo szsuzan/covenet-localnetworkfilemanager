@@ -38,7 +38,6 @@ export default function VideoPlayer({ item }: { item: Item }) {
 
   const [mode, setMode] = useState<Mode>("probing");
   const [error, setError] = useState("");
-  const [elapsed, setElapsed] = useState(0);
   const [key, setKey] = useState("");
   const [hlsStart, setHlsStart] = useState(0);
   const [forceHls, setForceHls] = useState(false);
@@ -128,7 +127,6 @@ export default function VideoPlayer({ item }: { item: Item }) {
     setHlsStart(offset);
     setMode("preparing");
     setError("");
-    setElapsed(0);
     setKey("");
     try {
       const res = await fetch("/api/hls", {
@@ -161,7 +159,6 @@ export default function VideoPlayer({ item }: { item: Item }) {
     setError("");
     setKey("");
     setHlsStart(0);
-    setElapsed(0);
     setCurrent(0);
     setDuration(0);
     setSourceDuration(0);
@@ -204,7 +201,6 @@ export default function VideoPlayer({ item }: { item: Item }) {
   useEffect(() => {
     if (mode !== "preparing" || !key) return;
     const timer = window.setInterval(async () => {
-      setElapsed((value) => value + 1);
       try {
         const res = await fetch(`/api/hls/${key}`);
         const data = await res.json().catch(() => null);
@@ -557,17 +553,12 @@ export default function VideoPlayer({ item }: { item: Item }) {
 
   if (mode === "probing" || mode === "preparing") {
     return (
-      <div className="vp-status">
+      <div className="vp vp-loading" ref={shellRef} role="status" aria-label="Loading video">
+        <div
+          className="vp-loading-poster"
+          style={{ backgroundImage: `url(${poster})` }}
+        />
         <div className="vp-spinner" />
-        <div className="vp-status-title">
-          {mode === "probing" ? "Checking video format…" : "Preparing stream…"}
-        </div>
-        {mode === "preparing" ? (
-          <div className="vp-status-text">
-            Transcoding on the server — playback starts automatically.
-            {elapsed > 0 ? ` ${Math.round(elapsed)}s` : ""}
-          </div>
-        ) : null}
       </div>
     );
   }
@@ -628,7 +619,10 @@ export default function VideoPlayer({ item }: { item: Item }) {
         }}
       />
 
-      {waiting && !error ? <div className="vp-spinner vp-spinner-center" /> : null}
+      <div
+        className={`vp-spinner vp-spinner-center ${waiting && !error ? "is-visible" : ""}`}
+        aria-hidden={!waiting || Boolean(error)}
+      />
 
       {!playing && !waiting ? (
         <button className="vp-center" onClick={togglePlay} aria-label="Play">
