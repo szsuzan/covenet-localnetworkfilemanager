@@ -113,10 +113,10 @@ If an older system unit exists, remove it so it cannot compete for port 3000:
 sudo systemctl disable --now fileshare.service
 sudo rm -f /etc/systemd/system/fileshare.service
 sudo systemctl daemon-reload
-sudo systemctl reset-failed fileshare.service
 ```
 
-Only the user-level `fileshare` and `cove-caddy` units should remain.
+Only the user-level `fileshare` and `cove-caddy` units should remain. If
+`disable` says the unit is not loaded, it was already removed; that is fine.
 
 ### Health checks
 
