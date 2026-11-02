@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { NextResponse, type NextRequest } from "next/server";
-import { apiUser, fail, originOk } from "@/lib/api";
+import { apiUser, fail, originOk, safeError } from "@/lib/api";
 import { audit } from "@/lib/audit";
 import {
   assertName,
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
         : 0;
       return NextResponse.json({ offset });
     } catch (error) {
-      return fail(error instanceof Error ? error.message : "Could not start upload");
+      return fail(safeError(error, "Could not start upload"));
     }
   }
 
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       audit(user, "file.upload", virtual, req);
       return NextResponse.json({ path: virtual });
     } catch (error) {
-      return fail(error instanceof Error ? error.message : "Could not finish upload", 500);
+      return fail(safeError(error, "Could not finish upload"), 500);
     }
   }
 

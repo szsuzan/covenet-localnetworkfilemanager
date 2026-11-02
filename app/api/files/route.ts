@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { NextResponse, type NextRequest } from "next/server";
-import { apiUser, fail, originOk } from "@/lib/api";
+import { apiUser, fail, originOk, safeError } from "@/lib/api";
 import { kindOf } from "@/lib/kinds";
 import {
   assertName,
@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
   try {
     return NextResponse.json(await list(user, rel));
   } catch (error) {
-    return fail(error instanceof Error ? error.message : "Could not read folder", 404);
+    return fail(safeError(error, "Could not read folder"), 404);
   }
 }
 
@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
 
     return fail("Unknown action");
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Operation failed";
+    const message = safeError(error, "Operation failed");
     return fail(message, message.includes("exist") ? 409 : 400);
   }
 }

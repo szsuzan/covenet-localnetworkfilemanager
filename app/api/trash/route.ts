@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { apiUser, fail, originOk } from "@/lib/api";
+import { apiUser, fail, originOk, safeError } from "@/lib/api";
 import { audit } from "@/lib/audit";
 import {
   deleteTrashEntry,
@@ -48,6 +48,6 @@ export async function POST(req: NextRequest) {
     }
     return fail("Unknown action");
   } catch (error) {
-    return fail(error instanceof Error ? error.message : "Trash operation failed");
+    return fail(safeError(error, "Trash operation failed"));
   }
 }

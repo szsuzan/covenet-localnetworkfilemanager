@@ -31,6 +31,21 @@ export function originOk(req: NextRequest) {
   }
 }
 
+/** Keep filesystem errors and absolute paths out of client responses. */
+export function safeError(error: unknown, fallback = "Operation failed") {
+  const message = error instanceof Error ? error.message : "";
+  if (
+    !message ||
+    /\b(?:ENOENT|EACCES|EPERM|ENOTDIR|EISDIR|ENOTEMPTY|EEXIST|ELOOP|ENOSPC|EROFS)\b/.test(
+      message,
+    ) ||
+    /(?:^|[\s'"])\/[^\s'"]+/.test(message)
+  ) {
+    return fallback;
+  }
+  return message;
+}
+
 export function safeStat(stat: { size: number }) {
   return stat.size;
 }
