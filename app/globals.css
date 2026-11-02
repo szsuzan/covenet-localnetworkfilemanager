@@ -3079,12 +3079,11 @@ html[data-theme="light"] .home-art-tile {
 
 .vp-spinner-center {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  inset: 0;
   z-index: 2;
+  margin: auto;
   opacity: 0;
   visibility: hidden;
-  transform: translate(-50%, -50%);
   transition: opacity 0.18s ease, visibility 0.18s ease;
 }
 
