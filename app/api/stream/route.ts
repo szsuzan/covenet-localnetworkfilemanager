@@ -52,17 +52,24 @@ async function handler(req: NextRequest, head: boolean) {
   const name = path.basename(abs);
   const size = stat.size;
   const forceDownload = download || !isInlineSafe(name);
+  const etag = `"${size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}"`;
   const headers = new Headers({
     "Content-Type": forceDownload && !download ? "application/octet-stream" : mimeOf(name),
     "Accept-Ranges": "bytes",
     "Content-Disposition": contentDisposition(name, forceDownload),
-    "Cache-Control": "private, no-cache",
+    // Safe because media URLs include the mtime as a cache-busting version.
+    "Cache-Control": download ? "private, no-store" : "private, max-age=86400",
+    "ETag": etag,
+    "Last-Modified": stat.mtime.toUTCString(),
     "X-Content-Type-Options": "nosniff",
     "X-Robots-Tag": "noindex",
     "Cross-Origin-Resource-Policy": "same-origin",
   });
 
   const range = req.headers.get("range");
+  if (!range && req.headers.get("if-none-match")?.includes(etag)) {
+    return new Response(null, { status: 304, headers });
+  }
   let start = 0;
   let end = size - 1;
   let status = 200;
@@ -97,7 +104,7 @@ async function handler(req: NextRequest, head: boolean) {
     return new Response(null, { status, headers });
   }
 
-  const stream = fs.createReadStream(abs, { start, end, highWaterMark: 1024 * 1024 });
+  const stream = fs.createReadStream(abs, { start, end, highWaterMark: 512 * 1024 });
   stream.on("error", () => stream.destroy());
   return new Response(Readable.toWeb(stream) as unknown as BodyInit, {
     status,

@@ -225,3 +225,67 @@ export function KindIcon({ kind, size = 18 }: { kind: string; size?: number }) {
   if (kind === "archive") return <ArchiveIcon {...props} />;
   return <FileIcon {...props} />;
 }
+
+export const PlayIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="M8 5.5v13l11-6.5Z" fill="currentColor" stroke="none" />
+  </Svg>
+);
+export const PauseIcon = (p: Props) => (
+  <Svg {...p}>
+    <rect x="7" y="5" width="3.6" height="14" rx="1" fill="currentColor" stroke="none" />
+    <rect x="13.4" y="5" width="3.6" height="14" rx="1" fill="currentColor" stroke="none" />
+  </Svg>
+);
+export const VolumeIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="M4 9v6h4l5 4V5Z" />
+    <path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" />
+  </Svg>
+);
+export const VolumeOffIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="M4 9v6h4l5 4V5Z" />
+    <path d="m17 9 4 6m0-6-4 6" />
+  </Svg>
+);
+export const MaximizeIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="M8 3H4a1 1 0 0 0-1 1v4M16 3h4a1 1 0 0 1 1 1v4M8 21H4a1 1 0 0 1-1-1v-4M16 21h4a1 1 0 0 0 1-1v-4" />
+  </Svg>
+);
+export const MinimizeIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="M4 8h4a1 1 0 0 0 1-1V3M20 8h-4a1 1 0 0 1-1-1V3M4 16h4a1 1 0 0 1 1 1v4M20 16h-4a1 1 0 0 0-1 1v4" />
+  </Svg>
+);
+export const PipIcon = (p: Props) => (
+  <Svg {...p}>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <rect x="12" y="12" width="6" height="4" rx="1" fill="currentColor" stroke="none" />
+  </Svg>
+);
+export const SettingsIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+    <circle cx="15" cy="7" r="2" />
+    <circle cx="9" cy="17" r="2" />
+  </Svg>
+);
+export const SkipBackIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="M4 5v14" />
+    <path d="M19 5.5 8 12l11 6.5Z" fill="currentColor" stroke="none" />
+  </Svg>
+);
+export const SkipForwardIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="M20 5v14" />
+    <path d="M5 5.5 16 12 5 18.5Z" fill="currentColor" stroke="none" />
+  </Svg>
+);
+export const ReplayIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" />
+  </Svg>
+);
