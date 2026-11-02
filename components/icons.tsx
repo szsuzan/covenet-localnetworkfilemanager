@@ -177,6 +177,14 @@ export const ClockIcon = (p: Props) => (
     <path d="M12 7v5l3 2" />
   </Svg>
 );
+export const WifiIcon = (p: Props) => (
+  <Svg {...p}>
+    <path d="M3 9a15 15 0 0 1 18 0" />
+    <path d="M6 12.5a10.5 10.5 0 0 1 12 0" />
+    <path d="M9 16a6 6 0 0 1 6 0" />
+    <circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" />
+  </Svg>
+);
 export const FolderUpIcon = (p: Props) => (
   <Svg {...p}>
     <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />

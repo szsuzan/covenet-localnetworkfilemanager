@@ -60,31 +60,27 @@ tailscale ip -4
 
 Cove keeps running when the network disappears; only the address changes.
 
-**Option A — use the laptop as the hotspot (no internet required)**
+**Option A — use the laptop as the hotspot (with in-app QR sharing)**
 
-Install the DHCP helper once:
+Install the helper once (needs internet for `dnsmasq`):
 
 ```bash
-sudo pacman -S dnsmasq
+sudo ./scripts/install-hotspot.sh
 ```
 
-Then:
+Then in **Admin → Offline hotspot**:
+
+1. Choose an SSID and password
+2. Click **Start hotspot**
+3. Scan **1 · Join Wi-Fi**, then **2 · Open Cove**
+
+Starting it disconnects the laptop from its current Wi-Fi, so open the admin
+page on the laptop at `http://127.0.0.1:3000` first.
+
+The CLI fallback is still available:
 
 ```bash
 ./scripts/hotspot.sh start
-```
-
-It asks for a password (min 8 chars), starts SSID **Cove** on `WIFI-INTERFACE`, adds
-UFW rules for the hotspot subnet, and prints the URL:
-
-```
-http://10.42.0.1:3000
-```
-
-Connect the phone/laptop to **Cove** and open that URL. Stop it with:
-
-```bash
-./scripts/hotspot.sh stop
 ```
 
 No internet is needed — the hotspot is just a local network. Phones may warn

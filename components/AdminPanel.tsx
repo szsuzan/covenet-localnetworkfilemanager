@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { SessionUser } from "./types";
-import { KeyIcon, TrashIcon } from "./icons";
+import { KeyIcon, TrashIcon, WifiIcon } from "./icons";
 import { formatBytes, formatDate } from "./format";
 import { PromptDialog } from "./Dialogs";
 import ConfirmDialog from "./ConfirmDialog";
@@ -34,6 +34,19 @@ type AuditEntry = {
   at: number;
 };
 
+type Hotspot = {
+  available: boolean;
+  running: boolean;
+  ssid: string;
+  password: string;
+  ip: string;
+  url: string;
+  wifiQr: string | null;
+  urlQr: string | null;
+  setupCommand: string;
+  error?: string;
+};
+
 export default function AdminPanel({ me }: { me: SessionUser }) {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -43,6 +56,11 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
   const [resetTarget, setResetTarget] = useState<AdminUser | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  const [hotspot, setHotspot] = useState<Hotspot | null>(null);
+  const [hotspotBusy, setHotspotBusy] = useState(false);
+  const [hotspotError, setHotspotError] = useState("");
+  const [hotspotSsid, setHotspotSsid] = useState("Cove");
+  const [hotspotPassword, setHotspotPassword] = useState("");
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -60,6 +78,48 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
       setError(loadError instanceof Error ? loadError.message : "Could not load users");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadHotspot() {
+    try {
+      const res = await fetch("/api/admin/hotspot");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not load hotspot status");
+      setHotspot(data);
+      setHotspotSsid((current) => current || data.ssid || "Cove");
+      setHotspotPassword((current) => current || data.password || "");
+    } catch (loadError) {
+      setHotspotError(
+        loadError instanceof Error ? loadError.message : "Could not load hotspot status",
+      );
+    }
+  }
+
+  async function hotspotAction(action: "start" | "stop") {
+    setHotspotBusy(true);
+    setHotspotError("");
+    try {
+      const res = await fetch("/api/admin/hotspot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          action === "start"
+            ? { action, ssid: hotspotSsid, password: hotspotPassword }
+            : { action },
+        ),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Hotspot action failed");
+      setHotspot(data);
+      if (data.ssid) setHotspotSsid(data.ssid);
+      if (data.password) setHotspotPassword(data.password);
+    } catch (actionError) {
+      setHotspotError(
+        actionError instanceof Error ? actionError.message : "Hotspot action failed",
+      );
+    } finally {
+      setHotspotBusy(false);
     }
   }
 
@@ -102,6 +162,7 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
   useEffect(() => {
     void refresh();
     void loadStats();
+    void loadHotspot();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -200,6 +261,144 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
             </div>
           </div>
         ) : null}
+
+        <div className="panel" style={{ marginBottom: 20 }}>
+          <div className="panel-head">
+            <WifiIcon /> Offline hotspot
+            <span className="grow" />
+            <button
+              className="btn small ghost"
+              onClick={() => void loadHotspot()}
+              disabled={hotspotBusy}
+            >
+              Refresh
+            </button>
+          </div>
+          <div className="modal-body">
+            {!hotspot ? (
+              <span className="muted">Checking hotspot…</span>
+            ) : !hotspot.available ? (
+              <div className="hotspot-setup">
+                <p>
+                  One-time setup is required to let the admin panel start a
+                  hotspot. Run this on the laptop once:
+                </p>
+                <code>{hotspot.setupCommand}</code>
+                <p className="form-hint">
+                  It installs dnsmasq and a narrow sudo helper. Needs internet
+                  once.
+                </p>
+              </div>
+            ) : hotspot.running ? (
+              <>
+                <div className="hotspot-status">
+                  <span className="pill on">Running</span>
+                  <strong>{hotspot.ssid}</strong>
+                  {hotspot.ip ? (
+                    <span className="hotspot-url">{hotspot.url}</span>
+                  ) : (
+                    <span className="muted">waiting for an address…</span>
+                  )}
+                </div>
+
+                <div className="hotspot-grid">
+                  {hotspot.wifiQr ? (
+                    <div className="qr-card">
+                      <img src={hotspot.wifiQr} alt="QR code to join the hotspot" />
+                      <strong>1 · Join Wi-Fi</strong>
+                      <span>{hotspot.ssid}</span>
+                    </div>
+                  ) : null}
+                  {hotspot.urlQr ? (
+                    <div className="qr-card">
+                      <img src={hotspot.urlQr} alt="QR code to open Cove" />
+                      <strong>2 · Open Cove</strong>
+                      <span>{hotspot.url}</span>
+                    </div>
+                  ) : null}
+                  <div className="hotspot-details">
+                    <div>
+                      <span>Password</span>
+                      <code>{hotspot.password || "not saved"}</code>
+                    </div>
+                    <p className="form-hint">
+                      Scan the Wi-Fi code first, then the Cove code.
+                    </p>
+                    {!hotspot.password ? (
+                      <p className="form-hint">
+                        This hotspot was started outside Cove, so the password
+                        is unknown here.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div>
+                  <button
+                    className="btn danger"
+                    onClick={() => void hotspotAction("stop")}
+                    disabled={hotspotBusy}
+                  >
+                    {hotspotBusy ? "Stopping…" : "Stop hotspot"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="hotspot-status">
+                  <span className="pill">Stopped</span>
+                  <span className="muted" style={{ fontSize: 13 }}>
+                    Turn the laptop into a local Wi-Fi network for phones and
+                    other devices.
+                  </span>
+                </div>
+                <form
+                  className="hotspot-form"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void hotspotAction("start");
+                  }}
+                >
+                  <div className="field">
+                    <label>Network name</label>
+                    <input
+                      value={hotspotSsid}
+                      onChange={(event) => setHotspotSsid(event.target.value)}
+                      maxLength={32}
+                      required
+                    />
+                  </div>
+                  <div className="field">
+                    <label>Password</label>
+                    <input
+                      value={hotspotPassword}
+                      onChange={(event) => setHotspotPassword(event.target.value)}
+                      minLength={8}
+                      maxLength={63}
+                      placeholder="at least 8 characters"
+                      required
+                    />
+                  </div>
+                  <button
+                    className="btn primary"
+                    type="submit"
+                    disabled={hotspotBusy}
+                  >
+                    {hotspotBusy ? "Starting…" : "Start hotspot"}
+                  </button>
+                </form>
+                <p className="form-hint">
+                  Starting the hotspot disconnects the laptop from its current
+                  Wi-Fi. Open this page at{" "}
+                  <code>http://127.0.0.1:3000</code> on the laptop to control it.
+                </p>
+              </>
+            )}
+
+            {hotspotError ? <div className="form-error">{hotspotError}</div> : null}
+            {hotspot?.error ? <div className="form-error">{hotspot.error}</div> : null}
+          </div>
+        </div>
 
         <div className="panel" style={{ marginBottom: 20 }}>
           <div className="panel-head">Create account</div>

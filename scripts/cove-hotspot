@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# Root helper for the Admin → Offline hotspot panel.
+# Installed to /usr/local/bin/cove-hotspot by scripts/install-hotspot.sh.
+set -euo pipefail
+
+CON="Cove-Hotspot"
+IFACE="${COVE_HOTSPOT_IFACE:-WIFI-INTERFACE}"
+SUBNET="10.42.0.0/24"
+ACTION="${1:-}"
+
+usage() {
+  echo "usage: cove-hotspot {start SSID PASSWORD|stop|status}" >&2
+  exit 2
+}
+
+allow_ufw() {
+  local port="$1" proto="$2" comment="$3"
+  command -v ufw >/dev/null 2>&1 || return 0
+  if ! ufw status 2>/dev/null | grep -qE "${port}/${proto}.*${SUBNET}"; then
+    ufw allow from "$SUBNET" to any port "$port" proto "$proto" comment "$comment" >/dev/null || true
+  fi
+}
+
+case "$ACTION" in
+  start)
+    [ "$#" -eq 3 ] || usage
+    SSID="$2"
+    PASS="$3"
+    if [ "${#SSID}" -lt 1 ] || [ "${#SSID}" -gt 32 ]; then
+      echo "SSID must be 1-32 characters" >&2
+      exit 2
+    fi
+    if [ "${#PASS}" -lt 8 ] || [ "${#PASS}" -gt 63 ]; then
+      echo "Password must be 8-63 characters" >&2
+      exit 2
+    fi
+
+    nmcli connection delete "$CON" >/dev/null 2>&1 || true
+    nmcli device wifi hotspot ifname "$IFACE" con-name "$CON" ssid "$SSID" password "$PASS"
+
+    IP="$(nmcli -g IP4.ADDRESS connection show "$CON" 2>/dev/null | head -1 | cut -d/ -f1 || true)"
+    if [ -n "${IP:-}" ]; then
+      SUBNET="${IP%.*}.0/24"
+    fi
+
+    allow_ufw 3000 tcp "Cove hotspot"
+    allow_ufw 22 tcp "Cove hotspot SSH"
+    allow_ufw 67 udp "Cove hotspot DHCP"
+    allow_ufw 53 udp "Cove hotspot DNS"
+    allow_ufw 5353 udp "Cove hotspot mDNS"
+    ;;
+
+  stop)
+    nmcli connection down "$CON" >/dev/null 2>&1 || true
+    ;;
+
+  status)
+    if nmcli -t -f NAME connection show --active 2>/dev/null | grep -qx "$CON"; then
+      echo "running"
+    else
+      echo "stopped"
+    fi
+    ;;
+
+  *)
+    usage
+    ;;
+esac
