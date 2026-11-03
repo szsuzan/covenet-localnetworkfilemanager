@@ -94,8 +94,13 @@ can alter it.
 
 ## Offline hotspot
 
-The hotspot turns the laptop into a local Wi-Fi network so phones can reach CoveNet
-without internet.
+<p align="center">
+  <img src="assets/hotspot-feature.png" alt="CoveNet offline hotspot and QR sharing" width="100%">
+</p>
+
+**No Wi-Fi at home? Use the CoveNet hotspot and QR codes to share easily.**
+The hotspot turns the laptop into a local Wi-Fi network so phones can reach
+CoveNet without internet.
 
 ### One-time setup
 

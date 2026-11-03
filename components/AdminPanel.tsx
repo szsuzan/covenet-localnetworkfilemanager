@@ -314,6 +314,10 @@ export default function AdminPanel({ me }: { me: SessionUser }) {
             </button>
           </div>
           <div className="modal-body">
+            <p className="form-hint" style={{ marginTop: 0 }}>
+              <strong>No Wi-Fi at home?</strong> Use the hotspot and QR to share
+              easily.
+            </p>
             {!hotspot ? (
               <span className="muted">Checking hotspot…</span>
             ) : !hotspot.available ? (

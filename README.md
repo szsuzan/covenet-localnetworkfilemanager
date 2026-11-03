@@ -109,7 +109,14 @@ tailscale ip -4
 
 ### No Wi-Fi: run a hotspot
 
-CoveNet keeps running when the network disappears; only the address changes.
+<p align="center">
+  <img src="docs/assets/hotspot-feature.png" alt="CoveNet offline hotspot and QR sharing" width="100%">
+</p>
+
+**No Wi-Fi at home? Use the CoveNet hotspot and QR codes to share easily.** The
+laptop creates a local Wi-Fi network; phones join it, scan the QR, and open
+CoveNet without a router or internet connection. CoveNet keeps running when the
+network disappears; only the address changes.
 
 **Option A — use the laptop as the hotspot (with in-app QR sharing)**
 
