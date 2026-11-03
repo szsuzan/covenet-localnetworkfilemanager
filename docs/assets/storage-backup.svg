@@ -41,7 +41,7 @@
   <text x="452" y="175" class="m">app database and generated caches</text>
   <rect x="452" y="202" width="256" height="70" rx="9" class="tag"/>
   <text x="468" y="226" class="t">app.db</text>
-  <text x="468" y="246" class="m">users · sessions · favorites · audit</text>
+  <text x="468" y="246" class="m">users · sessions · favorites · shares · audit</text>
   <rect x="452" y="288" width="256" height="70" rx="9" class="tag"/>
   <text x="468" y="312" class="t">caches and trash</text>
   <text x="468" y="332" class="m">uploads · thumbs · previews · hls · trash</text>

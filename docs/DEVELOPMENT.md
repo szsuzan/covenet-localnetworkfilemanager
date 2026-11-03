@@ -59,9 +59,11 @@ app/
   api/thumb/, preview/   thumbnails and HEIC previews
   api/zip/            streamed ZIP downloads
   api/trash/, favorites/, recent/, watch/, search/, home/
+  api/shares/        read-only Private folder grants
   api/admin/          users, stats, audit, cleanup, hotspot
 components/
-  FileBrowser.tsx    file list, uploads, bulk actions
+  FileBrowser.tsx    file list, uploads, bulk actions, shared space
+  ShareDialog.tsx    choose users for a Private folder
   Viewer.tsx         chooses a viewer by file kind
   VideoPlayer.tsx    custom player, HLS, resume
   PhotoViewer.tsx    zoom/pan/slideshow
@@ -70,7 +72,8 @@ components/
   SecurityPanel.tsx  password and 2FA
 lib/
   auth.ts, security.ts, loginGuard.ts, totp.ts, audit.ts
-  paths.ts           virtual Public/Private paths + traversal/symlink guard
+  paths.ts           Public/Private/Shared paths + traversal/symlink guard
+  shares.ts          share grants, recipients, revocation
   transcode.ts       HLS queue
   media.ts           ffprobe/ffmpeg helpers
   cleanup.ts, trash.ts, usage.ts, limits.ts
@@ -89,8 +92,11 @@ scripts/
   HTTP on the TLS port.
 - Auth is checked in route handlers and pages. Every mutation also checks
   `Origin`/`Sec-Fetch-Site` via `originOk`.
-- `resolveUserPath` maps virtual paths (`public/...`, `private/...`) to disk and
-  rejects traversal and symlink escapes. Do not bypass it.
+- `resolveUserPath` maps virtual paths (`public/...`, `private/...`,
+  `shared/<owner>/...`) to disk and rejects traversal and symlink escapes. The
+  shared namespace requires a matching read grant. Do not bypass it.
+- Share writes are rejected in the files and upload routes; recipients never get
+  mutation endpoints for a shared path.
 - Streaming uses HTTP range requests. Unsupported video formats start an HLS
   job; the client polls for readiness and plays the generated playlist.
 - Uploads are chunked; the server assembles and validates the final file.

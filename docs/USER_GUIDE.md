@@ -49,6 +49,7 @@ The left sidebar (or bottom navigation on a phone) has:
 | **Favorites** | Files and folders you have starred |
 | **Public** | Files every signed-in user can see |
 | **Private** | Your own folder; other users cannot see it |
+| **Shared with me** | Read-only folders other users have shared with you |
 | **Trash** | Deleted items waiting to be restored or purged |
 
 The top bar has search, the grid/list switch, sort order, upload controls and

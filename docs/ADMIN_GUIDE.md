@@ -27,6 +27,16 @@ The top cards show:
 Use **Run cleanup** to run the retention jobs immediately. Normal cleanup runs
 every 6 hours and on the first page load.
 
+## Folder sharing is user-managed
+
+Users can share a folder from their own Private space with selected active users.
+Those recipients get **read-only** access under **Shared with me**: browse,
+stream, preview and download only. They cannot upload, edit, delete or re-share.
+
+The admin UI does not browse another user's Private folder or create public share
+links. Disabling or deleting an account revokes its share grants. Owners manage
+grants from the folder's **Share** dialog.
+
 ## Create and manage accounts
 
 ### Create an account

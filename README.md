@@ -208,6 +208,7 @@ remaining actions. Summary:
 - CSRF protection via Origin + `Sec-Fetch-Site` checks on every mutation
 - Strict security headers and CSP; `X-Frame-Options`, `nosniff`, no-referrer
 - Path-traversal and symlink-escape guard on every file operation; private folders isolated per user
+- Private folders can be shared read-only with named users; no public links, writes or re-sharing
 - SVG/HTML/XML/JS forced to download (no stored XSS); ZIP skips symlinks
 - Upload chunk and file-size caps
 - Audit log of logins, uploads, deletes, admin actions and password/2FA changes

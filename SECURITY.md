@@ -56,7 +56,9 @@ It is not a public-internet service.
    escaped or forced to download.
 7. **Files are not encrypted at rest.** Full-disk encryption is recommended.
 8. **No malware scanning.** Uploads are stored as-is; do not run untrusted binaries.
-9. **No per-folder ACLs.** Access is Public vs. your own Private space.
+9. **Sharing is read-only and application-level.** Private folders can be
+   granted to named users; recipients can download/copy content, and root can
+   still read the underlying files. There are no public links or write grants.
 10. **SSH is still password-authenticated.** UFW now scopes 22 to the LAN and
     Tailscale; use keys before exposing the machine. See
     [Operations](docs/OPERATIONS.md#firewall).

@@ -44,6 +44,9 @@ traversal, upload path traversal, CSRF via Origin/Sec-Fetch-Site.
 - Login over HTTPS sets `__Host-cove=…; Secure; HttpOnly; SameSite=lax`; the
   authenticated `/api/auth` and `/files` requests succeed; the probe user was
   removed afterwards.
+- Read-only Private-folder sharing: recipient could list and read the grant;
+  recipient write/upload returned `403`; revoke returned `404`; owner folder
+  deletion removed the grant. Temporary users and files were cleaned up.
 - HTTP security headers present (CSP, nosniff, SAMEORIGIN, no-referrer,
   Permissions-Policy, COOP/CORP). HSTS is intentionally not enabled yet so
   clients are not locked out before they install the local CA.

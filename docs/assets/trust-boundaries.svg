@@ -69,7 +69,7 @@
   <rect x="684" y="252" width="200" height="38" rx="8" class="tag"/>
   <text x="696" y="276" class="tagtext">path resolver</text>
   <rect x="684" y="300" width="200" height="38" rx="8" class="tag"/>
-  <text x="696" y="324" class="tagtext">private = owner only</text>
+  <text x="696" y="324" class="tagtext">private = owner + read-only shares</text>
   <rect x="684" y="348" width="200" height="38" rx="8" class="tag"/>
   <text x="696" y="372" class="tagtext">symlink / traversal guards</text>
   <text x="684" y="426" class="m">App-level privacy, not</text>
@@ -84,8 +84,8 @@
   <text x="1006" y="268" class="okText">user</text>
   <rect x="992" y="304" width="146" height="80" rx="9" class="ok"/>
   <text x="1006" y="328" class="okText">Private/&lt;user&gt;</text>
-  <text x="1006" y="347" class="okText">owner only in</text>
-  <text x="1006" y="364" class="okText">the app</text>
+  <text x="1006" y="347" class="okText">owner + read-only</text>
+  <text x="1006" y="364" class="okText">share grants</text>
   <rect x="992" y="400" width="146" height="64" rx="9" class="warn"/>
   <text x="1006" y="423" class="warnText">Root / shell</text>
   <text x="1006" y="441" class="warnText">can read all</text>
@@ -98,6 +98,6 @@
   <path d="M910 290 H962" class="arrow"/>
   <text x="920" y="280" class="m">I/O</text>
 
-  <text x="44" y="552" class="m">Public is shared by every signed-in account. Private is mapped to the caller's own folder and enforced by every API.</text>
+  <text x="44" y="552" class="m">Public is shared by every signed-in account. Private is owner-only unless a read-only share grant exists, and every API enforces that boundary.</text>
   <text x="44" y="576" class="m">Encryption at rest would need either full-disk encryption (still readable while mounted) or client-side E2EE (server sees ciphertext only).</text>
 </svg>

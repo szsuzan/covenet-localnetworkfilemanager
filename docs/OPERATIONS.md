@@ -18,8 +18,8 @@ Caddy  ──  TLS, static certificate, security headers, reverse proxy
   │  127.0.0.1:3100
   ▼
 Next.js  ──  app, APIs, streaming, thumbnails, HLS jobs
-  ├── SQLite        data/app.db
-  ├── /srv/cove/files/{Public,Private}
+  ├── SQLite        data/app.db (users, sessions, shares, audit)
+  ├── /srv/cove/files/{Public,Private}  (Private grants are read-only)
   └── data/{uploads,thumbs,hls,trash}
 ```
 
