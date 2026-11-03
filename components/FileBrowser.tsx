@@ -6,6 +6,7 @@ import type { Item, SessionUser } from "./types";
 import Viewer from "./Viewer";
 import { PromptDialog } from "./Dialogs";
 import ConfirmDialog from "./ConfirmDialog";
+import ShareDialog from "./ShareDialog";
 import ThemeToggle from "./ThemeToggle";
 import PublicHome from "./PublicHome";
 import {
@@ -137,6 +138,7 @@ export default function FileBrowser({
   const [searchResults, setSearchResults] = useState<Item[] | null>(null);
   const [searching, setSearching] = useState(false);
   const [viewer, setViewer] = useState<Item | null>(null);
+  const [shareTarget, setShareTarget] = useState<Item | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [clipboard, setClipboard] = useState<Item[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -309,6 +311,7 @@ export default function FileBrowser({
   const homeView = mode === "files" && atRoot && !searchResults;
   const inPublic = path === "public" || path.startsWith("public/");
   const inPrivate = path === "private" || path.startsWith("private/");
+  const inShared = path === "shared" || path.startsWith("shared/");
 
   function updateUrl(nextMode: Mode, target: string) {
     const url =
@@ -448,7 +451,7 @@ export default function FileBrowser({
   }
 
   function startUploads(entries: Dropped[]) {
-    if (!user.canUpload || entries.length === 0) return;
+    if (inShared || !user.canUpload || entries.length === 0) return;
     const created: Task[] = entries.map(({ file, dir }) => ({
       id: uploadIdFor(dir, file),
       file,
@@ -551,7 +554,7 @@ export default function FileBrowser({
         event.preventDefault();
         setSelected(new Set(displayed.map((item) => item.path)));
       }
-      if (event.key === "Delete" && !typing && !viewer && selected.size > 0) {
+      if (event.key === "Delete" && !typing && !viewer && !inShared && selected.size > 0) {
         event.preventDefault();
         void bulkDelete();
       }
@@ -562,10 +565,10 @@ export default function FileBrowser({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [displayed, viewer, dialog, confirm, selected]);
+  }, [displayed, viewer, dialog, confirm, selected, inShared]);
 
   async function bulkDelete() {
-    if (selected.size === 0) return;
+    if (inShared || selected.size === 0) return;
     const paths = Array.from(selected);
     setConfirm({
       title: "Move to trash",
@@ -591,12 +594,13 @@ export default function FileBrowser({
   }
 
   function cutSelected() {
+    if (inShared) return;
     setClipboard(displayed.filter((item) => selected.has(item.path)));
     setSelected(new Set());
   }
 
   async function paste() {
-    if (clipboard.length === 0 || !path) return;
+    if (inShared || clipboard.length === 0 || !path) return;
     let firstError = "";
     let moved = 0;
     for (const item of clipboard) {
@@ -685,7 +689,7 @@ export default function FileBrowser({
     setDragging(false);
     setDragOverPath("");
     if (event.dataTransfer.types.includes("application/x-vault-item")) return;
-    if (!user.canUpload) return;
+    if (inShared || !user.canUpload) return;
     const entries = await collectDropped(event.dataTransfer, atRoot ? "public" : path);
     startUploads(entries);
   }
@@ -757,36 +761,52 @@ export default function FileBrowser({
             <DownloadIcon />
           </a>
         )}
-        <button
-          className="icon-btn"
-          title="Rename"
-          onClick={(event) => {
-            event.stopPropagation();
-            setDialog({ mode: "rename", item });
-          }}
-        >
-          <EditIcon />
-        </button>
-        <button
-          className="icon-btn action-cut"
-          title="Cut"
-          onClick={(event) => {
-            event.stopPropagation();
-            setClipboard([item]);
-          }}
-        >
-          <ScissorsIcon />
-        </button>
-        <button
-          className="icon-btn"
-          title="Move to trash"
-          onClick={(event) => {
-            event.stopPropagation();
-            void removeItem(item);
-          }}
-        >
-          <TrashIcon />
-        </button>
+        {inPrivate && item.isDir ? (
+          <button
+            className="icon-btn"
+            title="Share folder"
+            onClick={(event) => {
+              event.stopPropagation();
+              setShareTarget(item);
+            }}
+          >
+            <UsersIcon />
+          </button>
+        ) : null}
+        {!inShared ? (
+          <>
+            <button
+              className="icon-btn"
+              title="Rename"
+              onClick={(event) => {
+                event.stopPropagation();
+                setDialog({ mode: "rename", item });
+              }}
+            >
+              <EditIcon />
+            </button>
+            <button
+              className="icon-btn action-cut"
+              title="Cut"
+              onClick={(event) => {
+                event.stopPropagation();
+                setClipboard([item]);
+              }}
+            >
+              <ScissorsIcon />
+            </button>
+            <button
+              className="icon-btn"
+              title="Move to trash"
+              onClick={(event) => {
+                event.stopPropagation();
+                void removeItem(item);
+              }}
+            >
+              <TrashIcon />
+            </button>
+          </>
+        ) : null}
       </>
     );
   }
@@ -808,7 +828,7 @@ export default function FileBrowser({
         <nav className="side-nav">
           <div className="side-label">Library</div>
           <button
-            className={`side-link ${mode === "files" && !inPublic && !inPrivate ? "active" : ""}`}
+            className={`side-link ${mode === "files" && !inPublic && !inPrivate && !inShared ? "active" : ""}`}
             onClick={() => navigate("")}
           >
             <HomeIcon />
@@ -843,6 +863,13 @@ export default function FileBrowser({
           >
             <LockIcon />
             <span>Private</span>
+          </button>
+          <button
+            className={`side-link ${inShared ? "active" : ""}`}
+            onClick={() => navigate("shared")}
+          >
+            <UsersIcon />
+            <span>Shared with me</span>
           </button>
 
           <div className="side-label">Manage</div>
@@ -946,7 +973,9 @@ export default function FileBrowser({
                       ? "Public"
                       : part === "private"
                         ? "Private"
-                        : part
+                        : part === "shared"
+                          ? "Shared"
+                          : part
                     : part;
                 return (
                   <span key={target} style={{ display: "contents" }}>
@@ -962,6 +991,7 @@ export default function FileBrowser({
               })}
               {inPublic ? <span className="pill">Public · everyone</span> : null}
               {inPrivate ? <span className="pill admin">Private · only you</span> : null}
+              {inShared ? <span className="pill admin">Shared · read-only</span> : null}
               {homeView ? <span className="pill">Public overview</span> : null}
             </div>
           ) : (
@@ -976,7 +1006,7 @@ export default function FileBrowser({
             className="toolbar-actions"
             style={homeView ? { display: "none" } : undefined}
           >
-            {mode === "files" && clipboard.length > 0 ? (
+            {mode === "files" && clipboard.length > 0 && !inShared ? (
               <button
                 className="btn small"
                 onClick={() => void paste()}
@@ -995,7 +1025,7 @@ export default function FileBrowser({
                 </span>
               </button>
             ) : null}
-            {mode === "files" ? (
+            {mode === "files" && !inShared ? (
               <>
                 <button
                   className="btn small"
@@ -1123,12 +1153,16 @@ export default function FileBrowser({
             <button className="btn small" onClick={downloadSelected}>
               <DownloadIcon /> Download ZIP
             </button>
-            <button className="btn small" onClick={cutSelected}>
-              <ScissorsIcon /> Cut
-            </button>
-            <button className="btn small danger" onClick={() => void bulkDelete()}>
-              <TrashIcon /> Delete
-            </button>
+            {!inShared ? (
+              <>
+                <button className="btn small" onClick={cutSelected}>
+                  <ScissorsIcon /> Cut
+                </button>
+                <button className="btn small danger" onClick={() => void bulkDelete()}>
+                  <TrashIcon /> Delete
+                </button>
+              </>
+            ) : null}
             <button className="btn small ghost" onClick={selectAll}>
               Select all
             </button>
@@ -1176,11 +1210,11 @@ export default function FileBrowser({
                 ? "Try a different search."
                 : mode === "favorites"
                   ? "Star a file to see it here."
-                  : user.canUpload && mode === "files"
+                  : user.canUpload && mode === "files" && !inShared
                     ? "Drag files here or use the Upload button."
                     : "Nothing here yet."}
             </span>
-            {!searchResults && mode === "files" && user.canUpload ? (
+            {!searchResults && mode === "files" && user.canUpload && !inShared ? (
               <button className="btn primary" onClick={() => fileInput.current?.click()} disabled={atRoot}>
                 <UploadIcon /> Upload files
               </button>
@@ -1197,7 +1231,7 @@ export default function FileBrowser({
                 onClick={() => openItem(item)}
                 role="button"
                 tabIndex={0}
-                draggable={mode === "files"}
+                draggable={mode === "files" && !inShared}
                 onDragStart={(event) => {
                   event.dataTransfer.setData("application/x-vault-item", item.path);
                   event.dataTransfer.effectAllowed = "move";
@@ -1263,7 +1297,7 @@ export default function FileBrowser({
                 }`}
                 key={item.path}
                 onClick={() => openItem(item)}
-                draggable={mode === "files"}
+                draggable={mode === "files" && !inShared}
                 onDragStart={(event) => {
                   event.dataTransfer.setData("application/x-vault-item", item.path);
                   event.dataTransfer.effectAllowed = "move";
@@ -1324,7 +1358,7 @@ export default function FileBrowser({
 
       <nav className="mobile-nav" aria-label="Primary">
         <button
-          className={mode === "files" ? "active" : ""}
+          className={mode === "files" && !inShared ? "active" : ""}
           onClick={() => navigate("")}
         >
           <HomeIcon />
@@ -1343,6 +1377,10 @@ export default function FileBrowser({
         >
           <StarIcon />
           <span>Favorites</span>
+        </button>
+        <button className={inShared ? "active" : ""} onClick={() => navigate("shared")}>
+          <UsersIcon />
+          <span>Shared</span>
         </button>
         <a href="/trash">
           <TrashIcon />
@@ -1430,6 +1468,14 @@ export default function FileBrowser({
         </div>
       ) : null}
 
+      {shareTarget ? (
+        <ShareDialog
+          item={shareTarget}
+          onClose={() => setShareTarget(null)}
+          onSaved={() => void refreshCurrent()}
+        />
+      ) : null}
+
       {viewer ? (
         <Viewer
           items={displayed}
@@ -1475,7 +1521,7 @@ export default function FileBrowser({
         </div>
       ) : null}
 
-      {dragging && user.canUpload ? (
+      {dragging && user.canUpload && !inShared ? (
         <div className="drop-overlay">
           <div className="drop-box">
             <UploadIcon width={34} height={34} />

@@ -47,6 +47,9 @@ export async function POST(req: NextRequest) {
     try {
       if (!body.dir) return fail("Open Public or Private first");
       const dir = body.dir;
+      if (dir === "shared" || dir.startsWith("shared/")) {
+        return fail("Shared folders are read-only", 403);
+      }
       const dirAbs = resolveUserPath(user, dir).abs;
       await fs.promises.mkdir(dirAbs, { recursive: true });
       const name = assertName(body.name || "");
@@ -92,6 +95,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ offset: stat.size, error: "Upload incomplete" }, { status: 409 });
     }
     try {
+      if (meta.dir === "shared" || meta.dir.startsWith("shared/")) {
+        return fail("Shared folders are read-only", 403);
+      }
       const dirAbs = resolveUserPath(user, meta.dir).abs;
       const dest = uniqueDestination(dirAbs, meta.name);
       await fs.promises.rename(part, dest);

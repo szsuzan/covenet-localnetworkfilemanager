@@ -180,6 +180,7 @@ at least 8 characters and 3 of: lowercase, uppercase, numbers, symbols.
 ## Features
 
 - Public space (everyone) and per-user Private space (owner only)
+- Share a Private folder read-only with selected users through **Shared with me**
 - Grid/list browsing, breadcrumbs, filename search, recent uploads, favorites
 - Multi-select, bulk ZIP download, folder download as ZIP, bulk cut/delete
 - Drag-and-drop, whole-folder and phone-camera uploads; pause/resume/cancel

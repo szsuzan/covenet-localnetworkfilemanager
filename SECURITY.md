@@ -28,7 +28,8 @@ It is not a public-internet service.
 | Files | Canonicalised paths plus realpath checks inside the storage root (symlink escape blocked), chunk and total-size caps |
 | Stored XSS | SVG/HTML/XML/JS/CSS served as `application/octet-stream` with `Content-Disposition: attachment` |
 | Archives | ZIP walker refuses symlinks, so it cannot follow links outside the space |
-| Authorisation | Every API re-checks the session and per-space access; private paths map to the caller's own folder |
+| Authorisation | Every API re-checks the session and per-space access; Private paths map to the owner, while read-only shares are checked against explicit grants |
+| Sharing | Private folders can be shared read-only with selected active users; recipients cannot write or re-share, and owner rename/move/delete revokes the grant |
 | Audit | Logins, failures, uploads, deletes/restores, admin changes, password and 2FA events |
 
 ## Residual risks (accepted)

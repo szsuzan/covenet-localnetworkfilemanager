@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { db } from "./db";
 
 export const STORAGE_ROOT = path.resolve(
   /*turbopackIgnore: true*/ process.env.STORAGE_ROOT ||
@@ -79,7 +80,37 @@ export function resolveUserPath(
     throw new Error("Invalid path");
   }
   const space = parts[0];
-  if (space !== "public" && space !== "private") throw new Error("Invalid path");
+  if (space !== "public" && space !== "private" && space !== "shared") {
+    throw new Error("Invalid path");
+  }
+
+  if (space === "shared") {
+    if (parts.length < 3) throw new Error("Invalid path");
+    const owner = parts[1];
+    const requested = parts.slice(2).join("/");
+    const grants = db()
+      .prepare(
+        `SELECT s.path AS path FROM shares s
+         JOIN users owner ON owner.id = s.owner_id
+         JOIN users grantee ON grantee.id = s.grantee_id
+         WHERE grantee.username = ? AND owner.username = ?
+           AND s.permission = 'read'`,
+      )
+      .all(user.username, owner) as Array<{ path: string }>;
+    const grant = grants.find(
+      (entry) => requested === entry.path || requested.startsWith(`${entry.path}/`),
+    );
+    if (!grant) throw new Error("Invalid path");
+
+    const base = path.join(PRIVATE_ROOT, owner);
+    const abs = path.resolve(base, requested);
+    const relative = path.relative(base, abs);
+    if (relative.startsWith("..") || path.isAbsolute(relative)) {
+      throw new Error("Invalid path");
+    }
+    assertRealInside(base, abs);
+    return { abs, virtual: ["shared", owner, requested].join("/") };
+  }
 
   const base =
     space === "public" ? PUBLIC_ROOT : path.join(PRIVATE_ROOT, user.username);

@@ -71,6 +71,19 @@ own Private space.
 - The admin can still reset passwords, so privacy is enforced by the application,
   not by the operating system. See [Security](../SECURITY.md).
 
+### Sharing a Private folder
+
+1. Open **Private** and find the folder.
+2. Use the **Share** action on the folder.
+3. Select one or more existing users and save.
+
+Recipients see the folder under **Shared with me**. They get **read-only**
+access: browse, stream, preview and download, but no upload, rename, move,
+delete or re-share. Uncheck users in the same Share dialog to revoke access.
+
+Renaming, moving or deleting the folder revokes its shares. Shares are between
+named accounts only; there are no public links.
+
 ## Upload files
 
 Uploads require the **upload** permission on your account. If the Upload button

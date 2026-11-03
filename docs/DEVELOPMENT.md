@@ -99,9 +99,13 @@ scripts/
 
 ## Data model
 
-`data/app.db` contains users, sessions, favorites, watch progress, audit log and
-login throttle. `data/` also holds in-progress uploads, thumbnails, HLS cache and
-trash. The filesystem is the source of truth for file listings.
+`data/app.db` contains users, sessions, favorites, watch progress, share grants,
+audit log and login throttle. `data/` also holds in-progress uploads, thumbnails,
+HLS cache and trash. The filesystem is the source of truth for file listings.
+
+Share grants are read-only and point at a folder relative to the owner's Private
+root. The `shared/<owner>/<folder>` namespace is resolved through the same
+canonical-path and symlink guards as Private files.
 
 The app assumes a single instance and a local disk. Do not point multiple app
 processes at the same SQLite file without adding a locking/coordination layer.

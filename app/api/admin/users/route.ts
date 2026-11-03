@@ -6,6 +6,7 @@ import { apiUser, fail, originOk } from "@/lib/api";
 import { db, type UserRow } from "@/lib/db";
 import { PRIVATE_ROOT, TRASH_ROOT } from "@/lib/paths";
 import { audit } from "@/lib/audit";
+import { cleanupUserShares } from "@/lib/shares";
 import { validatePassword } from "@/lib/security";
 
 export const runtime = "nodejs";
@@ -133,7 +134,10 @@ export async function POST(req: NextRequest) {
     db()
       .prepare("UPDATE users SET role = ?, disabled = ?, can_upload = ? WHERE id = ?")
       .run(nextRole, nextDisabled ? 1 : 0, nextUpload ? 1 : 0, body.id);
-    if (nextDisabled) db().prepare("DELETE FROM sessions WHERE user_id = ?").run(body.id);
+    if (nextDisabled) {
+      db().prepare("DELETE FROM sessions WHERE user_id = ?").run(body.id);
+      cleanupUserShares(body.id);
+    }
     audit(me, "admin.user.update", target.username, req);
     return NextResponse.json({ users: listUsers() });
   }
@@ -161,6 +165,7 @@ export async function POST(req: NextRequest) {
       }
     }
     db().prepare("DELETE FROM sessions WHERE user_id = ?").run(body.id);
+    cleanupUserShares(body.id);
     db().prepare("DELETE FROM users WHERE id = ?").run(body.id);
     audit(me, "admin.user.delete", target.username, req);
     return NextResponse.json({ users: listUsers() });

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { NextResponse, type NextRequest } from "next/server";
 import { apiUser, fail, originOk, safeError } from "@/lib/api";
+import type { SessionUser } from "@/lib/db";
 import { kindOf } from "@/lib/kinds";
 import {
   assertName,
@@ -12,8 +13,8 @@ import {
   uniqueDestination,
   virtualJoin,
   virtualParent,
-  type SpaceUser,
 } from "@/lib/paths";
+import { receivedShareItems, revokeSharesUnder } from "@/lib/shares";
 import { moveToTrash } from "@/lib/trash";
 import { audit } from "@/lib/audit";
 
@@ -29,37 +30,55 @@ type Item = {
   kind: string;
 };
 
-async function rootListing(user: SpaceUser) {
-  const [pub, priv] = await Promise.all([
+async function rootListing(user: SessionUser) {
+  const [pub, priv, shared] = await Promise.all([
     fs.promises.stat(PUBLIC_ROOT).catch(() => null),
     fs.promises.stat(path.join(PRIVATE_ROOT, user.username)).catch(() => null),
+    receivedShareItems(user),
   ]);
-  return {
-    path: "",
-    parent: "",
-    items: [
-      {
-        name: "Public",
-        path: "public",
-        isDir: true,
-        size: 0,
-        mtime: pub ? Math.floor(pub.mtimeMs) : 0,
-        kind: "folder",
-      },
-      {
-        name: "Private",
-        path: "private",
-        isDir: true,
-        size: 0,
-        mtime: priv ? Math.floor(priv.mtimeMs) : 0,
-        kind: "folder",
-      },
-    ] satisfies Item[],
-  };
+  const items: Item[] = [
+    {
+      name: "Public",
+      path: "public",
+      isDir: true,
+      size: 0,
+      mtime: pub ? Math.floor(pub.mtimeMs) : 0,
+      kind: "folder",
+    },
+    {
+      name: "Private",
+      path: "private",
+      isDir: true,
+      size: 0,
+      mtime: priv ? Math.floor(priv.mtimeMs) : 0,
+      kind: "folder",
+    },
+  ];
+  if (shared.length > 0) {
+    items.push({
+      name: "Shared with me",
+      path: "shared",
+      isDir: true,
+      size: 0,
+      mtime: Math.max(...shared.map((item) => item.mtime)),
+      kind: "folder",
+    });
+  }
+  return { path: "", parent: "", items };
 }
 
-async function list(user: SpaceUser, rel: string) {
+async function list(user: SessionUser, rel: string) {
   if (!rel) return rootListing(user);
+  if (rel === "shared") {
+    return { path: "shared", parent: "", items: await receivedShareItems(user) };
+  }
+  if (rel.startsWith("shared/") && rel.split("/").length === 2) {
+    const owner = rel.slice("shared/".length);
+    const items = (await receivedShareItems(user)).filter((item) =>
+      item.path.startsWith(`shared/${owner}/`),
+    );
+    return { path: rel, parent: "shared", items };
+  }
 
   const { abs: dir, virtual } = resolveUserPath(user, rel);
   const stat = await fs.promises.stat(dir);
@@ -125,11 +144,20 @@ export async function POST(req: NextRequest) {
     | null;
   if (!body?.action) return fail("Missing action");
 
+  const readOnly = (virtual: string) =>
+    virtual === "shared" || virtual.startsWith("shared/");
+  const revokePrivateShare = (virtual: string) => {
+    if (!virtual.startsWith("private/")) return;
+    const rel = virtual.slice("private/".length);
+    if (rel) revokeSharesUnder(user.id, rel);
+  };
+
   try {
     if (body.action === "mkdir") {
       if (!body.dir) return fail("Open Public or Private first");
       const name = assertName(body.name || "");
       const target = virtualJoin(body.dir, name);
+      if (readOnly(target)) return fail("Shared folders are read-only", 403);
       const { abs } = resolveUserPath(user, target);
       await fs.promises.mkdir(abs);
       audit(user, "folder.create", target, req);
@@ -138,6 +166,7 @@ export async function POST(req: NextRequest) {
 
     if (body.action === "rename") {
       const { abs: src, virtual } = resolveUserPath(user, body.path);
+      if (readOnly(virtual)) return fail("Shared folders are read-only", 403);
       if (virtual === "public" || virtual === "private") {
         return fail("Cannot rename a space");
       }
@@ -147,6 +176,7 @@ export async function POST(req: NextRequest) {
         return fail("A file or folder with that name already exists", 409);
       }
       await fs.promises.rename(src, dest);
+      revokePrivateShare(virtual);
       audit(user, "file.rename", `${virtual} -> ${name}`, req);
       return NextResponse.json({
         ok: true,
@@ -156,6 +186,7 @@ export async function POST(req: NextRequest) {
 
     if (body.action === "move") {
       const { abs: src, virtual } = resolveUserPath(user, body.path);
+      if (readOnly(virtual)) return fail("Shared folders are read-only", 403);
       if (virtual === "public" || virtual === "private") {
         return fail("Cannot move a space");
       }
@@ -163,6 +194,7 @@ export async function POST(req: NextRequest) {
         user,
         body.destDir,
       );
+      if (readOnly(destVirtual)) return fail("Shared folders are read-only", 403);
       const dirStat = await fs.promises.stat(destDir);
       if (!dirStat.isDirectory()) return fail("Destination is not a folder");
       if (destDir === src || destDir.startsWith(src + path.sep)) {
@@ -170,6 +202,7 @@ export async function POST(req: NextRequest) {
       }
       const dest = uniqueDestination(destDir, path.basename(src));
       await fs.promises.rename(src, dest);
+      revokePrivateShare(virtual);
       audit(user, "file.move", `${virtual} -> ${destVirtual}`, req);
       return NextResponse.json({
         ok: true,
@@ -179,11 +212,13 @@ export async function POST(req: NextRequest) {
 
     if (body.action === "delete") {
       const { abs: src, virtual } = resolveUserPath(user, body.path);
+      if (readOnly(virtual)) return fail("Shared folders are read-only", 403);
       if (virtual === "public" || virtual === "private") {
         return fail("Cannot delete a space");
       }
       await fs.promises.lstat(src);
       await moveToTrash(src, virtual, user.id);
+      revokePrivateShare(virtual);
       audit(user, "file.delete", virtual, req);
       return NextResponse.json({ ok: true });
     }

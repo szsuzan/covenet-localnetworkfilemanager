@@ -39,6 +39,17 @@ CREATE TABLE IF NOT EXISTS watch_progress (
   updated_at INTEGER NOT NULL,
   PRIMARY KEY (user_id, path)
 );
+CREATE TABLE IF NOT EXISTS shares (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_id INTEGER NOT NULL,
+  path TEXT NOT NULL,
+  grantee_id INTEGER NOT NULL,
+  permission TEXT NOT NULL DEFAULT 'read',
+  created_at INTEGER NOT NULL,
+  UNIQUE (owner_id, path, grantee_id)
+);
+CREATE INDEX IF NOT EXISTS shares_grantee ON shares(grantee_id);
+CREATE INDEX IF NOT EXISTS shares_owner ON shares(owner_id, path);
 CREATE TABLE IF NOT EXISTS audit_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER,
