@@ -10,6 +10,10 @@ It is not a public-internet service.
 > `308` before any app content is served. Each client must trust the local CA
 > (`/cove-ca.crt`) once.
 
+<p align="center">
+  <img src="docs/assets/trust-boundaries.svg" alt="CoveNet trust boundaries" width="100%">
+</p>
+
 ## What is protected
 
 | Area | Control |

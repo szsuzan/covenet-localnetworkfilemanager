@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">CoveNet architecture</title>
+  <desc id="desc">Clients reach Caddy over TLS on port 3000. Caddy proxies to Next.js on loopback port 3100. Next uses local storage, SQLite, and media caches.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#7f9cf5"/>
+    </marker>
+    <style>
+      .bg { fill: #0b1020; }
+      .card { fill: #121a2c; stroke: #2b3b5c; stroke-width: 1.5; }
+      .accent { fill: #16213a; stroke: #6f8cff; stroke-width: 2; }
+      .title { fill: #f1f5ff; font: 700 30px system-ui, sans-serif; }
+      .sub { fill: #94a3bd; font: 400 14px system-ui, sans-serif; }
+      .h { fill: #f1f5ff; font: 700 18px system-ui, sans-serif; }
+      .t { fill: #dbe5f5; font: 500 14px system-ui, sans-serif; }
+      .m { fill: #8e9ab0; font: 400 12px system-ui, sans-serif; }
+      .tag { fill: #0e1628; stroke: #334468; }
+      .tagtext { fill: #b8c6df; font: 500 11px system-ui, sans-serif; }
+      .arrow { stroke: #7f9cf5; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #536887; stroke-width: 1.5; stroke-dasharray: 6 6; fill: none; }
+      .green { fill: #10291f; stroke: #3e9b6f; }
+      .greenText { fill: #8ee0b5; font: 600 12px system-ui, sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="720" rx="18"/>
+  <text x="44" y="56" class="title">CoveNet architecture</text>
+  <text x="44" y="80" class="sub">One encrypted public port, a loopback-only app, and local storage</text>
+
+  <!-- clients -->
+  <rect x="40" y="130" width="230" height="410" rx="16" class="card"/>
+  <text x="62" y="164" class="h">Clients</text>
+  <text x="62" y="186" class="m">Trusted devices</text>
+
+  <rect x="62" y="216" width="186" height="72" rx="11" class="tag"/>
+  <text x="78" y="242" class="t">LAN laptop / phone</text>
+  <text x="78" y="263" class="m">https://HOST.local:3000</text>
+
+  <rect x="62" y="306" width="186" height="72" rx="11" class="tag"/>
+  <text x="78" y="332" class="t">Tailscale</text>
+  <text x="78" y="353" class="m">tailnet / MagicDNS</text>
+
+  <rect x="62" y="396" width="186" height="72" rx="11" class="tag"/>
+  <text x="78" y="422" class="t">Offline hotspot</text>
+  <text x="78" y="443" class="m">https://10.42.0.1:3000</text>
+
+  <text x="62" y="510" class="m">Browsers must trust</text>
+  <text x="62" y="528" class="m">the CoveNet CA once.</text>
+
+  <!-- caddy -->
+  <rect x="330" y="170" width="250" height="330" rx="16" class="accent"/>
+  <text x="354" y="208" class="h">Caddy</text>
+  <text x="354" y="232" class="m">Public listener</text>
+  <text x="354" y="264" class="title" style="font-size: 25px">:3000</text>
+  <rect x="354" y="288" width="200" height="34" rx="8" class="tag"/>
+  <text x="366" y="310" class="tagtext">TLS · local CA</text>
+  <rect x="354" y="332" width="200" height="34" rx="8" class="tag"/>
+  <text x="366" y="354" class="tagtext">HTTP → HTTPS · 308</text>
+  <rect x="354" y="376" width="200" height="34" rx="8" class="tag"/>
+  <text x="366" y="398" class="tagtext">reverse proxy</text>
+  <rect x="354" y="420" width="200" height="34" rx="8" class="tag"/>
+  <text x="366" y="442" class="tagtext">security headers</text>
+  <text x="354" y="480" class="m">Only network-exposed port</text>
+
+  <!-- next -->
+  <rect x="640" y="130" width="285" height="410" rx="16" class="card"/>
+  <text x="664" y="166" class="h">Next.js application</text>
+  <text x="664" y="190" class="m">Loopback only</text>
+  <text x="664" y="224" class="title" style="font-size: 22px">127.0.0.1:3100</text>
+  <rect x="664" y="248" width="237" height="34" rx="8" class="tag"/>
+  <text x="676" y="270" class="tagtext">auth · sessions · CSRF</text>
+  <rect x="664" y="292" width="237" height="34" rx="8" class="tag"/>
+  <text x="676" y="314" class="tagtext">files · uploads · ZIP</text>
+  <rect x="664" y="336" width="237" height="34" rx="8" class="tag"/>
+  <text x="676" y="358" class="tagtext">range streaming · HLS</text>
+  <rect x="664" y="380" width="237" height="34" rx="8" class="tag"/>
+  <text x="676" y="402" class="tagtext">thumbnails · PDF/photo viewers</text>
+  <rect x="664" y="454" width="237" height="58" rx="9" class="tag"/>
+  <text x="676" y="476" class="tagtext">Public = signed-in users</text>
+  <text x="676" y="496" class="tagtext">Private = owner only</text>
+
+  <!-- storage -->
+  <rect x="970" y="130" width="190" height="410" rx="16" class="card"/>
+  <text x="992" y="166" class="h">Storage</text>
+  <text x="992" y="188" class="m">Filesystem is truth</text>
+
+  <rect x="992" y="212" width="146" height="90" rx="10" class="tag"/>
+  <text x="1006" y="237" class="t">FileShare/</text>
+  <text x="1006" y="258" class="m">Public/</text>
+  <text x="1006" y="276" class="m">Private/&lt;user&gt;/</text>
+  <text x="1006" y="292" class="m">original files</text>
+
+  <rect x="992" y="318" width="146" height="128" rx="10" class="tag"/>
+  <text x="1006" y="343" class="t">data/</text>
+  <text x="1006" y="363" class="m">app.db</text>
+  <text x="1006" y="381" class="m">uploads/</text>
+  <text x="1006" y="399" class="m">thumbs/ · previews/</text>
+  <text x="1006" y="417" class="m">hls/ · trash/</text>
+  <text x="1006" y="435" class="m">hotspot.json</text>
+
+  <rect x="992" y="466" width="146" height="48" rx="9" class="green"/>
+  <text x="1006" y="486" class="greenText">Certificate</text>
+  <text x="1006" y="502" class="greenText">data/caddy/</text>
+
+  <!-- arrows -->
+  <path d="M270 355 H322" class="arrow"/>
+  <text x="278" y="344" class="m">HTTPS</text>
+
+  <path d="M580 350 H632" class="arrow"/>
+  <text x="586" y="339" class="m">loopback</text>
+
+  <path d="M925 350 H962" class="arrow"/>
+  <text x="930" y="339" class="m">read/write</text>
+
+  <!-- support -->
+  <rect x="330" y="540" width="595" height="62" rx="12" class="card"/>
+  <text x="352" y="566" class="h" style="font-size: 14px">Local media services</text>
+  <text x="352" y="586" class="m">ffmpeg / ffprobe for video and HLS · sharp + ImageMagick for images · PDF.js for PDF previews</text>
+
+  <rect x="970" y="540" width="190" height="62" rx="12" class="card"/>
+  <text x="988" y="566" class="m">Backups</text>
+  <text x="988" y="585" class="m">separate destination required</text>
+
+  <text x="44" y="656" class="m">Flow: browser → Caddy :3000 (TLS / redirect) → Next :3100 (authorization + app logic) → FileShare + data.</text>
+  <text x="44" y="680" class="m">Keep :3100 on loopback. Expose :3000 only on trusted networks.</text>
+</svg>

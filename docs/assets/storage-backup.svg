@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" role="img" aria-labelledby="title desc">
+  <title id="title">CoveNet storage and backup layout</title>
+  <desc id="desc">Original files live under FileShare, app data under data, and backups go to a separate destination. The current backup path is on the same disk.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#7f9cf5"/>
+    </marker>
+    <style>
+      .bg { fill: #0b1020; }
+      .card { fill: #121a2c; stroke: #2b3b5c; stroke-width: 1.5; }
+      .title { fill: #f1f5ff; font: 700 28px system-ui, sans-serif; }
+      .sub { fill: #94a3bd; font: 400 13px system-ui, sans-serif; }
+      .h { fill: #f1f5ff; font: 700 17px system-ui, sans-serif; }
+      .m { fill: #8e9ab0; font: 400 12px system-ui, sans-serif; }
+      .t { fill: #dbe5f5; font: 500 13px system-ui, sans-serif; }
+      .tag { fill: #0e1628; stroke: #334468; }
+      .arrow { stroke: #7f9cf5; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .warn { fill: #2a2116; stroke: #a77b35; }
+      .warnText { fill: #f1cf8c; font: 500 12px system-ui, sans-serif; }
+      .ok { fill: #10291f; stroke: #3e9b6f; }
+      .okText { fill: #8ee0b5; font: 500 12px system-ui, sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="480" rx="18"/>
+  <text x="44" y="52" class="title">Storage and backups</text>
+  <text x="44" y="77" class="sub">The filesystem is the source of truth; caches and trash are rebuildable, originals are not</text>
+
+  <rect x="40" y="120" width="300" height="270" rx="15" class="card"/>
+  <text x="62" y="153" class="h">STORAGE_ROOT</text>
+  <text x="62" y="175" class="m">/srv/cove/files (example)</text>
+  <rect x="62" y="202" width="256" height="70" rx="9" class="ok"/>
+  <text x="78" y="226" class="okText">Public/</text>
+  <text x="78" y="246" class="okText">shared with signed-in users</text>
+  <rect x="62" y="288" width="256" height="70" rx="9" class="ok"/>
+  <text x="78" y="312" class="okText">Private/&lt;username&gt;/</text>
+  <text x="78" y="332" class="okText">owner only in the app</text>
+
+  <rect x="430" y="120" width="300" height="270" rx="15" class="card"/>
+  <text x="452" y="153" class="h">data/</text>
+  <text x="452" y="175" class="m">app database and generated caches</text>
+  <rect x="452" y="202" width="256" height="70" rx="9" class="tag"/>
+  <text x="468" y="226" class="t">app.db</text>
+  <text x="468" y="246" class="m">users · sessions · favorites · audit</text>
+  <rect x="452" y="288" width="256" height="70" rx="9" class="tag"/>
+  <text x="468" y="312" class="t">caches and trash</text>
+  <text x="468" y="332" class="m">uploads · thumbs · previews · hls · trash</text>
+
+  <rect x="820" y="120" width="330" height="270" rx="15" class="card"/>
+  <text x="842" y="153" class="h">Backup destination</text>
+  <text x="842" y="175" class="m">set BACKUP_DEST to another disk</text>
+  <rect x="842" y="202" width="286" height="70" rx="9" class="warn"/>
+  <text x="858" y="226" class="warnText">Current example: same disk</text>
+  <text x="858" y="246" class="warnText">protects against accidental deletion</text>
+  <text x="858" y="262" class="warnText">but not disk failure or theft</text>
+  <rect x="842" y="288" width="286" height="70" rx="9" class="ok"/>
+  <text x="858" y="312" class="okText">Recommended: external + encrypted</text>
+  <text x="858" y="332" class="okText">restic / borg repository</text>
+
+  <path d="M340 255 H422" class="arrow"/>
+  <text x="348" y="245" class="m">originals</text>
+  <path d="M730 255 H812" class="arrow"/>
+  <text x="738" y="245" class="m">snapshot</text>
+
+  <text x="44" y="438" class="m">The backup script hardlinks files, copies SQLite consistently, keeps 14 runs and is triggered by fileshare-backup.timer.</text>
+  <text x="44" y="458" class="m">Encrypt the backup repository; it contains Private files. Verify restores regularly.</text>
+</svg>

@@ -6,6 +6,10 @@ For user and admin behavior see the [User guide](USER_GUIDE.md) and
 
 ## Architecture
 
+<p align="center">
+  <img src="assets/architecture.svg" alt="CoveNet architecture" width="100%">
+</p>
+
 ```
 client
   │  HTTPS :3000  (plain HTTP gets a 308 redirect)
@@ -23,6 +27,10 @@ Only Caddy listens on the network. Next is loopback-only. Caddy's built-in
 `http_redirect` wrapper turns plain HTTP on port 3000 into a `308` to the same
 URL over HTTPS; there is no separate HTTP port and no mux process.
 
+<p align="center">
+  <img src="assets/trust-boundaries.svg" alt="CoveNet trust boundaries" width="100%">
+</p>
+
 ## Prerequisites
 
 - Linux with systemd user services and linger enabled.
@@ -37,7 +45,7 @@ URL over HTTPS; there is no separate HTTP port and no mux process.
 ## Install
 
 ```bash
-git clone <repo-url> cove
+git clone https://github.com/szsuzan/covenet-localnetworkfilemanager.git cove
 cd cove
 npm ci
 cp .env.example .env.local
@@ -256,6 +264,10 @@ sudo ./scripts/install-hotspot.sh
 ```
 
 ## Backups
+
+<p align="center">
+  <img src="assets/storage-backup.svg" alt="CoveNet storage and backup layout" width="100%">
+</p>
 
 `scripts/backup.sh` makes hardlink snapshots of `STORAGE_ROOT`, a consistent
 SQLite copy of `data/app.db`, and keeps the last 14 runs. It runs daily at 03:30

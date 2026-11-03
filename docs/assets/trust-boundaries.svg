@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">CoveNet trust boundaries</title>
+  <desc id="desc">Trusted clients cross TLS into the app. Authorization and path checks separate Public and Private spaces. The server operator can still read the filesystem.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#7f9cf5"/>
+    </marker>
+    <style>
+      .bg { fill: #0b1020; }
+      .card { fill: #121a2c; stroke: #2b3b5c; stroke-width: 1.5; }
+      .zone { fill: none; stroke: #536887; stroke-width: 1.5; stroke-dasharray: 7 7; }
+      .title { fill: #f1f5ff; font: 700 30px system-ui, sans-serif; }
+      .sub { fill: #94a3bd; font: 400 14px system-ui, sans-serif; }
+      .h { fill: #f1f5ff; font: 700 17px system-ui, sans-serif; }
+      .t { fill: #dbe5f5; font: 500 14px system-ui, sans-serif; }
+      .m { fill: #8e9ab0; font: 400 12px system-ui, sans-serif; }
+      .tag { fill: #0e1628; stroke: #334468; }
+      .tagtext { fill: #b8c6df; font: 500 12px system-ui, sans-serif; }
+      .arrow { stroke: #7f9cf5; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .warn { fill: #2a2116; stroke: #a77b35; }
+      .warnText { fill: #f1cf8c; font: 500 12px system-ui, sans-serif; }
+      .ok { fill: #10291f; stroke: #3e9b6f; }
+      .okText { fill: #8ee0b5; font: 500 12px system-ui, sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="620" rx="18"/>
+  <text x="44" y="54" class="title">Trust boundaries</text>
+  <text x="44" y="79" class="sub">TLS protects the wire; the app protects user separation; the OS operator can still read storage</text>
+
+  <rect x="40" y="120" width="240" height="380" rx="16" class="zone"/>
+  <text x="62" y="152" class="h">Trusted network</text>
+  <text x="62" y="174" class="m">LAN · Tailscale · hotspot</text>
+
+  <rect x="62" y="204" width="196" height="74" rx="10" class="card"/>
+  <text x="78" y="230" class="t">Signed-in user</text>
+  <text x="78" y="252" class="m">session cookie</text>
+  <text x="78" y="269" class="m">Secure · HttpOnly · SameSite</text>
+
+  <rect x="62" y="300" width="196" height="74" rx="10" class="card"/>
+  <text x="78" y="326" class="t">Admin</text>
+  <text x="78" y="348" class="m">users · cleanup</text>
+  <text x="78" y="365" class="m">hotspot · audit</text>
+
+  <rect x="62" y="396" width="196" height="74" rx="10" class="warn"/>
+  <text x="78" y="422" class="warnText">Anyone with server root</text>
+  <text x="78" y="443" class="warnText">can read the filesystem</text>
+  <text x="78" y="460" class="warnText">and the CA key</text>
+
+  <rect x="350" y="120" width="250" height="380" rx="16" class="card"/>
+  <text x="374" y="154" class="h">Caddy</text>
+  <text x="374" y="176" class="m">edge boundary</text>
+  <rect x="374" y="204" width="200" height="38" rx="8" class="tag"/>
+  <text x="386" y="228" class="tagtext">TLS on :3000</text>
+  <rect x="374" y="252" width="200" height="38" rx="8" class="tag"/>
+  <text x="386" y="276" class="tagtext">plain HTTP → 308</text>
+  <rect x="374" y="300" width="200" height="38" rx="8" class="tag"/>
+  <text x="386" y="324" class="tagtext">static local-CA cert</text>
+  <rect x="374" y="348" width="200" height="38" rx="8" class="tag"/>
+  <text x="386" y="372" class="tagtext">security headers</text>
+  <text x="374" y="426" class="m">Next is not exposed</text>
+  <text x="374" y="444" class="m">on the network.</text>
+
+  <rect x="660" y="120" width="250" height="380" rx="16" class="card"/>
+  <text x="684" y="154" class="h">Application</text>
+  <text x="684" y="176" class="m">authorization boundary</text>
+  <rect x="684" y="204" width="200" height="38" rx="8" class="tag"/>
+  <text x="696" y="228" class="tagtext">Origin / Sec-Fetch checks</text>
+  <rect x="684" y="252" width="200" height="38" rx="8" class="tag"/>
+  <text x="696" y="276" class="tagtext">path resolver</text>
+  <rect x="684" y="300" width="200" height="38" rx="8" class="tag"/>
+  <text x="696" y="324" class="tagtext">private = owner only</text>
+  <rect x="684" y="348" width="200" height="38" rx="8" class="tag"/>
+  <text x="696" y="372" class="tagtext">symlink / traversal guards</text>
+  <text x="684" y="426" class="m">App-level privacy, not</text>
+  <text x="684" y="444" class="m">full-disk encryption.</text>
+
+  <rect x="970" y="120" width="190" height="380" rx="16" class="card"/>
+  <text x="992" y="154" class="h">Storage</text>
+  <text x="992" y="176" class="m">filesystem boundary</text>
+  <rect x="992" y="208" width="146" height="80" rx="9" class="ok"/>
+  <text x="1006" y="232" class="okText">Public</text>
+  <text x="1006" y="251" class="okText">every signed-in</text>
+  <text x="1006" y="268" class="okText">user</text>
+  <rect x="992" y="304" width="146" height="80" rx="9" class="ok"/>
+  <text x="1006" y="328" class="okText">Private/&lt;user&gt;</text>
+  <text x="1006" y="347" class="okText">owner only in</text>
+  <text x="1006" y="364" class="okText">the app</text>
+  <rect x="992" y="400" width="146" height="64" rx="9" class="warn"/>
+  <text x="1006" y="423" class="warnText">Root / shell</text>
+  <text x="1006" y="441" class="warnText">can read all</text>
+  <text x="1006" y="457" class="warnText">stored files</text>
+
+  <path d="M282 290 H342" class="arrow"/>
+  <text x="294" y="280" class="m">HTTPS</text>
+  <path d="M600 290 H652" class="arrow"/>
+  <text x="610" y="280" class="m">loopback</text>
+  <path d="M910 290 H962" class="arrow"/>
+  <text x="920" y="280" class="m">I/O</text>
+
+  <text x="44" y="552" class="m">Public is shared by every signed-in account. Private is mapped to the caller's own folder and enforced by every API.</text>
+  <text x="44" y="576" class="m">Encryption at rest would need either full-disk encryption (still readable while mounted) or client-side E2EE (server sees ciphertext only).</text>
+</svg>

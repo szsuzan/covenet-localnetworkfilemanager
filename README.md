@@ -12,6 +12,28 @@ logging.
 Next.js 16 · SQLite · local filesystem · ffmpeg · sharp
 ```
 
+Source: <https://github.com/szsuzan/covenet-localnetworkfilemanager>
+
+## Preview
+
+<p align="center">
+  <img src="docs/assets/login.png" alt="CoveNet sign-in screen" width="760">
+</p>
+
+## Architecture
+
+<p align="center">
+  <img src="docs/assets/architecture.svg" alt="CoveNet architecture diagram" width="100%">
+</p>
+
+A browser reaches **Caddy on port 3000**. Caddy terminates TLS, redirects plain
+HTTP, and proxies to **Next.js on loopback port 3100**. The app reads original
+files from `FileShare` and keeps SQLite, uploads, trash and media caches under
+`data/`. Tailscale and the optional hotspot reach the same port.
+
+See [trust boundaries](docs/assets/trust-boundaries.svg) and
+[storage/backup layout](docs/assets/storage-backup.svg).
+
 ## Documentation
 
 - [User guide](docs/USER_GUIDE.md) — sign in, spaces, uploads, viewers, trash
@@ -19,6 +41,7 @@ Next.js 16 · SQLite · local filesystem · ffmpeg · sharp
 - [Operations](docs/OPERATIONS.md) — install, services, certificates, backups, troubleshooting
 - [Development](docs/DEVELOPMENT.md) — code map, request flow, verification
 - [Security model](SECURITY.md) and [security audit](SECURITY_AUDIT.md)
+- Diagrams: [architecture](docs/assets/architecture.svg), [trust boundaries](docs/assets/trust-boundaries.svg), [storage and backups](docs/assets/storage-backup.svg)
 
 ## Access
 
